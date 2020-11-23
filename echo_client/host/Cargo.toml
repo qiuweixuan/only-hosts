@@ -1,0 +1,21 @@
+[package]
+name = "echo_client"
+version = "0.1.0"
+authors = ["The Rust OP-TEE TrustZone SDK Project Developers"]
+license = "Apache-2.0"
+repository = "https://github.com/mesalock-linux/rust-optee-trustzone-sdk.git"
+description = "An example of Rust OP-TEE TrustZone SDK."
+edition = "2018"
+
+[dependencies]
+libc = "0.2.48"
+optee-teec = { path = "../../../optee-teec" }
+sae_net = { path = "../../../host-lib/sae_net" }
+tokio = { version = "0.3", features = ["full"] }
+tokio-util = { version = "0.5.0", features = ["full"]} 
+bytes = "0.6"
+futures = "0.3.8"
+
+
+[profile.release]
+lto = true
