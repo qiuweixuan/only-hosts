@@ -97,6 +97,34 @@ impl Codec for ClientHelloPayload {
     }
 }
 
+// ServerHello负载
+#[derive(Debug)]
+pub struct ServerHelloPayload {
+    pub random: Random,
+    pub cipher_suite: CipherSuite,
+    pub name_group: NamedGroup,
+}
+
+impl Codec for ServerHelloPayload {
+    fn encode(&self, bytes: &mut Vec<u8>) {
+        self.random.encode(bytes);
+        self.cipher_suite.encode(bytes);
+        self.name_group.encode(bytes);
+    }
+
+    fn read(r: &mut Reader) -> Option<ServerHelloPayload> {
+        let ret = ServerHelloPayload {
+            random: Random::read(r)?,
+            cipher_suite: CipherSuite::read(r)?,
+            name_group: NamedGroup::read(r)?,
+        };
+        Some(ret)
+    }
+}
+
+
+
+
 // 握手协议负载（不带类型和长度）
 #[derive(Debug)]
 pub enum HandshakePayload {

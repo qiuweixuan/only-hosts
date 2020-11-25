@@ -2,12 +2,14 @@ use crate::msgs::base::Payload;
 use crate::msgs::codec::{Codec, Reader};
 use crate::msgs::handshake::HandshakeMessagePayload;
 use crate::msgs::type_enums::{ContentType, HandshakeType, ProtocolVersion};
-// use std::mem;
+use crate::msgs::alert::{AlertMessagePayload,SaeAlert};
+
+
 
 // SAE消息体负载
 #[derive(Debug)]
 pub enum MessagePayload {
-    // Alert(AlertMessagePayload),
+    Alert(AlertMessagePayload),
     Handshake(HandshakeMessagePayload),
     // ChangeCipherSpec(ChangeCipherSpecPayload),
     Opaque(Payload),
@@ -16,7 +18,7 @@ pub enum MessagePayload {
 impl MessagePayload {
     pub fn encode(&self, bytes: &mut Vec<u8>) {
         match *self {
-            // MessagePayload::Alert(ref x) => x.encode(bytes),
+            MessagePayload::Alert(ref x) => x.encode(bytes),
             MessagePayload::Handshake(ref x) => x.encode(bytes),
             // MessagePayload::ChangeCipherSpec(ref x) => x.encode(bytes),
             MessagePayload::Opaque(ref x) => x.encode(bytes),
@@ -25,7 +27,7 @@ impl MessagePayload {
 
     pub fn length(&self) -> usize {
         match *self {
-            // MessagePayload::Alert(ref x) => x.length(),
+            MessagePayload::Alert(ref x) => x.length(),
             MessagePayload::Handshake(ref x) => x.length(),
             // MessagePayload::ChangeCipherSpec(ref x) => x.length(),
             MessagePayload::Opaque(ref x) => x.0.len(),
@@ -46,12 +48,14 @@ pub struct Message {
 }
 
 // SAE消息体帧错误类型
+#[derive(Debug)]
 pub enum MessageError {
     TooShortForHeader,
     TooShortForLength,
     IllegalLength,
     IllegalContentType,
     IllegalProtocolVersion,
+    Unknown
 }
 
 // 头部、负载、总长度限制
@@ -62,8 +66,16 @@ impl Message {
     /// for ciphertext overheads.
     pub const MAX_PAYLOAD: u16 = 16384 + 2048;
 
+
+    pub const TYPE_SIZE: u16 = 1;
+
+    pub const VERSION_SIZE: u16 = 2;
+
+    pub const LEN_SIZE: u16 = 2;
+
     /// Content type, version and size.
-    pub const HEADER_SIZE: u16 = 1 + 2 + 2;
+    // pub const HEADER_SIZE: u16 = 1 + 2 + 2;
+    pub const HEADER_SIZE: u16 = Message::TYPE_SIZE + Message::VERSION_SIZE + Message::LEN_SIZE;
 
     /// Maximum on-wire message size.
     pub const MAX_WIRE_SIZE: usize = (Message::MAX_PAYLOAD + Message::HEADER_SIZE) as usize;
@@ -142,6 +154,15 @@ impl Message {
             false
         }
     }
+
+    pub fn build_alert(version: ProtocolVersion , alert: SaeAlert) -> Message {
+        Message {
+            typ: ContentType::Alert,
+            version: version,
+            payload: MessagePayload::Alert(alert.value()),
+        }
+    }
+
 
     /*  pub fn take_payload(self) -> Vec<u8> {
         // self.into_opaque().take_opaque_payload().unwrap().0

@@ -1,4 +1,5 @@
-use crate::msgs::enums::{AlertLevel, AlertDescription};
+// use crate::msgs::enums::{AlertLevel, AlertDescription};
+use crate::msgs::type_enums::{AlertLevel, AlertDescription};
 use crate::msgs::codec::{Codec, Reader};
 
 
@@ -31,3 +32,49 @@ impl AlertMessagePayload {
         1 + 1
     }
 }
+
+
+
+#[derive(Debug)]
+pub enum SaeAlert {
+    CloseNotify,
+    UnexpectedMessage,
+    HandshakeFailure,
+    IllegalParameter,
+    DecodeError,
+    DecryptError
+}
+
+impl SaeAlert {
+    pub fn value(&self) -> AlertMessagePayload{
+        match *self{
+            SaeAlert::CloseNotify => AlertMessagePayload {
+                level: AlertLevel::Warning,
+                description: AlertDescription::CloseNotify
+            },
+            SaeAlert::UnexpectedMessage => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::UnexpectedMessage
+            },
+            SaeAlert::HandshakeFailure => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::HandshakeFailure
+            },
+            SaeAlert::IllegalParameter => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::IllegalParameter
+            },
+            SaeAlert::DecodeError => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::DecodeError
+            },
+            SaeAlert::DecryptError => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::DecryptError
+            },
+        }
+    }
+}
+
+
+
