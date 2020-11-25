@@ -41,8 +41,8 @@ impl SessionDuplex {
 
     pub async fn read_one_message_detail_error(
         &mut self,
-        protocal_version: ProtocolVersion,
-    ) -> Option<Message> {
+        protocal_version: &ProtocolVersion,
+    ) ->  Option<Message> {
         if let Some(message) = self.codec_read_half.next().await {
             match message {
                 Ok(bytes) => {
@@ -66,14 +66,18 @@ impl SessionDuplex {
             // 发送DecodeError警告
             let alert_message = Message::build_alert(protocal_version, SaeAlert::DecodeError);
             self.write_one_message(alert_message).await.ok();
-            
         }
-        // 返回空
-        None
+        return None;
     }
 
     pub async fn write_one_message(&mut self, message: Message) -> Result<(), std::io::Error> {
         let buf = message.get_encoding();
-        self.write_half.write_all(&buf).await
+        match self.write_half.write_all(&buf).await{
+            Err(err) => {
+                println!("[write_one_message]  error {:?}", err);
+                Err(err)
+            },
+            Ok(()) => Ok(()) 
+        }
     }
 }

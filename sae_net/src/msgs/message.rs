@@ -155,10 +155,10 @@ impl Message {
         }
     }
 
-    pub fn build_alert(version: ProtocolVersion , alert: SaeAlert) -> Message {
+    pub fn build_alert(version: &ProtocolVersion , alert: SaeAlert) -> Message {
         Message {
             typ: ContentType::Alert,
-            version: version,
+            version: version.clone(),
             payload: MessagePayload::Alert(alert.value()),
         }
     }
