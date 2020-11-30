@@ -21,6 +21,18 @@ enum_builder! {
     }
 }
 
+impl CipherSuite{
+    pub fn is_ecc(&self) -> bool{
+        match* self{
+            CipherSuite::ECCPWD_AES_128_GCM_SHA256 |  CipherSuite::ECCPWD_AES_256_GCM_SHA384 => true,
+            _ => false
+        }
+    }
+    pub fn is_ffc(&self) -> bool{
+        !self.is_ecc()
+    }
+}
+
 
 // 哈希算法
 enum_builder! {
@@ -68,6 +80,18 @@ enum_builder! {
         FFDHE4096 => 0x0102,
         FFDHE6144 => 0x0103,
         FFDHE8192 => 0x0104
+    }
+}
+
+impl NamedGroup{
+    pub fn is_ecc(&self) -> bool{
+        match* self{
+            NamedGroup::Sepc384r1 |  NamedGroup::Secp521r1 => true,
+            _ => false
+        }
+    }
+    pub fn is_ffc(&self) -> bool{
+        !self.is_ecc()
     }
 }
 

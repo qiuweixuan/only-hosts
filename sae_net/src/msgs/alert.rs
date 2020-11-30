@@ -4,7 +4,7 @@ use crate::msgs::codec::{Codec, Reader};
 
 
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq,Clone)]
 pub struct AlertMessagePayload {
     pub level: AlertLevel,
     pub description: AlertDescription,

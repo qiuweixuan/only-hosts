@@ -1,13 +1,14 @@
-use crate::msgs::codec::{Codec, Reader};
-use crate::msgs::message::{Message};
-use crate::msgs::type_enums::ProtocolVersion;
 use crate::msgs::alert::{SaeAlert};
+use crate::msgs::codec::{Codec, Reader};
+use crate::msgs::message::Message;
+use crate::msgs::type_enums::ProtocolVersion;
+use crate::session::error::StateChangeError;
 
 use futures::StreamExt;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::TcpStream;
-use tokio_util::codec::{FramedRead, LengthDelimitedCodec};
 use tokio::prelude::*;
+use tokio_util::codec::{FramedRead, LengthDelimitedCodec};
 
 /// 会话层双工通信器
 /// 提供SAE Message读写功能
@@ -42,7 +43,7 @@ impl SessionDuplex {
     pub async fn read_one_message_detail_error(
         &mut self,
         protocal_version: &ProtocolVersion,
-    ) ->  Option<Message> {
+    ) -> Option<Message> {
         if let Some(message) = self.codec_read_half.next().await {
             match message {
                 Ok(bytes) => {
@@ -72,12 +73,54 @@ impl SessionDuplex {
 
     pub async fn write_one_message(&mut self, message: Message) -> Result<(), std::io::Error> {
         let buf = message.get_encoding();
-        match self.write_half.write_all(&buf).await{
+        match self.write_half.write_all(&buf).await {
             Err(err) => {
                 println!("[write_one_message]  error {:?}", err);
                 Err(err)
-            },
-            Ok(()) => Ok(()) 
+            }
+            Ok(()) => Ok(()),
         }
     }
+
+    // Ok正常读取信息，Err发生编码错误
+    pub async fn read_one_message_or_err(&mut self) -> Result<Option<Message>, StateChangeError> {
+        if let Some(message) = self.codec_read_half.next().await {
+            match message {
+                Ok(bytes) => {
+                    let mut rd = Reader::init(bytes.as_ref());
+                    match Message::read_with_detailed_error(&mut rd) {
+                        // 正常读取消息（返回消息）
+                        Ok(message) => return Ok(Some(message)),
+                        // 解析消息错误
+                        Err(err) => println!(
+                            "[read_one_message_detail_error] decode one message with error: {:?}",
+                            err
+                        ),
+                    }
+                }
+                // 读取消息错误
+                Err(err) => println!(
+                    "[read_one_message_detail_error] read one message with error: {:?}",
+                    err
+                ),
+            };
+            // 发送DecodeError警告
+
+            return Err(StateChangeError::AlertSend(SaeAlert::DecodeError.value()));
+        }
+        return Ok(None);
+    }
+
+    pub async fn write_one_message_or_err(&mut self, message: Message) -> Result<(), StateChangeError> {
+        let buf = message.get_encoding();
+        match self.write_half.write_all(&buf).await {
+            Err(err) => {
+                println!("[write_one_message]  error {:?}", err);
+                Err(StateChangeError::InternelError(err.to_string()))
+            }
+            Ok(()) => Ok(()),
+        }
+    }
+
+
 }

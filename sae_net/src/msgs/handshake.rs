@@ -129,12 +129,14 @@ impl Codec for ServerHelloPayload {
 #[derive(Debug)]
 pub enum HandshakePayload {
     ClientHello(ClientHelloPayload),
+    ServerHello(ServerHelloPayload),
 }
 
 impl HandshakePayload {
     fn encode(&self, bytes: &mut Vec<u8>) {
         match *self {
             HandshakePayload::ClientHello(ref x) => x.encode(bytes),
+            HandshakePayload::ServerHello(ref x) => x.encode(bytes),
         }
     }
 }
@@ -169,6 +171,10 @@ impl Codec for HandshakeMessagePayload {
             HandshakeType::ClientHello => {
                 HandshakePayload::ClientHello(ClientHelloPayload::read(&mut sub)?)
             }
+            HandshakeType::ServerHello => {
+                HandshakePayload::ServerHello(ServerHelloPayload::read(&mut sub)?)
+            }
+
             _ => return None,
         };
 
