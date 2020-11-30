@@ -9,10 +9,8 @@ use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::try_join;
 
-
-use sae_net::session::client_config::{ClientConfig};
-use sae_net::session::client_session::{ClientSession};
-
+use sae_net::session::client_config::ClientConfig;
+use sae_net::session::client_session::ClientSession;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -28,21 +26,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let server_sock = TcpStream::connect(addr).await?;
     // let mut client_session_duplex = SessionDuplex::new(server_sock);
 
-    let client_join = tokio::spawn(async move{
-        let config = ClientConfig::new();
-        let mut session = ClientSession::new(server_sock,config);
+    let client_join = tokio::spawn(async move {
+        // let config = ClientConfig::new();
+        let config = ClientConfig::new_ecc_config();
+
+        let mut session = ClientSession::new(server_sock, config);
         let state_or_error = session.handshake().await;
-        match state_or_error{
-            Ok(_) => {} ,
+        match state_or_error {
+            Ok(_) => {}
             Err(err) => {
-                println!("StateChangeError {:?}",err);
+                println!("handshake error: {:?}", err);
                 return;
             }
         };
-
     });
 
-    
     if let Err(e) = try_join!(client_join) {
         println!("client_join failed, error={}", e);
     };

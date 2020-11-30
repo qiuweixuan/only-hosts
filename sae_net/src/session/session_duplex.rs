@@ -104,9 +104,8 @@ impl SessionDuplex {
                     err
                 ),
             };
-            // 发送DecodeError警告
-
-            return Err(StateChangeError::AlertSend(SaeAlert::DecodeError.value()));
+            // 返回DecodeError警告
+            return Err(StateChangeError::AlertSend(SaeAlert::DecodeError));
         }
         return Ok(None);
     }

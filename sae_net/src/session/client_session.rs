@@ -18,35 +18,27 @@ impl ClientSession {
         }
     }
     pub async fn handshake(&mut self) -> Result<(), StateChangeError> {
-        // 开始握手
-        let state_or_error = self.start_handshake().await;
+      
+        // 启动握手
+        if let Err(err) = self.inner_handshake().await {
+            // 统一错误处理
+            err.handle_error(&mut self.duplex,&self.config.protocal_version).await;
+            return Err(err);
+        }
 
-        let mut state = match state_or_error {
-            Ok(state) => state,
-            Err(err) => {
-                println!("StateChangeError {:?}", err);
-                return Err(err);
-            }
-        };
-        // while let Some(msg) = self.common.message_deframer.frames.pop_front() {
-        //     match self.process_msg(msg) {
-        //         Ok(_) => {}
-        //         Err(err) => {
-        //             self.error = Some(err.clone());
-        //             return Err(err);
-        //         }
-        //     }
-        // }
+        // 正常状态
+        return Ok(());
+    }
 
+    async fn inner_handshake(&mut self) -> Result<(), StateChangeError>  {
+        // 初始化状态
+        let init_state = Box::new(InitialClientHandshakeState::new());
+        let client_hello_message = init_state.initial_client_hello(self);
+        let mut state : client_state::NextClientHandshakeState = init_state.handle(self, client_hello_message).await?;
+        // 循环推进状态机，直至完成握手过程
         while state.is_handshake_finished() != true {
             // 接收数据包
-            let message = match self.duplex.read_one_message_or_err().await {
-                Ok(message) => message,
-                Err(err) => {
-                    println!("StateChangeError {:?}", err);
-                    return Err(err);
-                }
-            };
+            let message = self.duplex.read_one_message_or_err().await?;
 
             // 处理数据包
             if let Some(received_message) = message {
@@ -57,12 +49,7 @@ impl ClientSession {
                 return Err(StateChangeError::InvalidTransition);
             }
         }
-        return Ok(());
-    }
 
-    pub async fn start_handshake(&mut self) -> client_state::NextClientHandshakeStateOrError {
-        let init_state = Box::new(InitialClientHandshakeState::new());
-        let client_hello_message = init_state.initial_client_hello(self);
-        init_state.handle(self, client_hello_message).await
+        Ok(())
     }
 }

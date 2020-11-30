@@ -62,8 +62,8 @@ impl ExpectClientHello {
 impl ServerHandshakeState for ExpectClientHello {
     async fn handle(mut self: Box<Self>, sess: &mut ServerSession, m: Message) -> NextServerHandshakeStateOrError {
         // 检查收到的消息
-        // StateChangeError::check_receive_message(&m, &[ContentType::Handshake], &[HandshakeType::ClientHello])?;
-        // 检查收到的消息，并获取负载
+        StateChangeError::check_receive_message(&m, &[ContentType::Handshake], &[HandshakeType::ClientHello])?;
+        // 获取消息负载
         let client_hello = require_handshake_msg!(m, HandshakeType::ClientHello, HandshakePayload::ClientHello)?;
 
         // 选择加密套件
@@ -72,7 +72,7 @@ impl ServerHandshakeState for ExpectClientHello {
         // 没有合适的加密组件，返回握手失败告警
         if maybe_ciphersuite.is_none() {
             return Err(StateChangeError::AlertSend(
-                SaeAlert::HandshakeFailure.value(),
+                SaeAlert::HandshakeFailure,
             ))
         }
         let cipher_suite = maybe_ciphersuite.unwrap();
@@ -82,7 +82,7 @@ impl ServerHandshakeState for ExpectClientHello {
         // 没有合适的命名群，返回握手失败告警
         if maybe_namedgroup.is_none() {
             return Err(StateChangeError::AlertSend(
-                SaeAlert::HandshakeFailure.value(),
+                SaeAlert::HandshakeFailure,
             ))
         }
         let named_group = maybe_namedgroup.unwrap();

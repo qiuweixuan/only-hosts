@@ -5,11 +5,11 @@ macro_rules! require_handshake_msg(
           MessagePayload::Handshake(ref hsp) => match hsp.payload {
               $payload_type(ref hm) => Ok(hm),
               _ => Err(StateChangeError::AlertSend(
-                SaeAlert::UnexpectedMessage.value(),
+                SaeAlert::UnexpectedMessage,
             ))
           }
           _ => Err(StateChangeError::AlertSend(
-            SaeAlert::UnexpectedMessage.value(),
+            SaeAlert::UnexpectedMessage,
         ))
       }
     )

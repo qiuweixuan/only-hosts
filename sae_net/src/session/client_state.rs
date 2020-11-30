@@ -1,7 +1,7 @@
 use crate::msgs::message::{Message,MessagePayload};
 use crate::msgs::type_enums::{HandshakeType,ContentType};
 use crate::msgs::handshake::{HandshakePayload, HandshakeMessagePayload, ClientHelloPayload,Random};
-
+use crate::msgs::alert::{SaeAlert};
 use crate::session::{error::StateChangeError,client_session::ClientSession};
 
 use async_trait::async_trait;
@@ -93,7 +93,10 @@ pub struct ExpectServerHello {
 #[async_trait]
 impl ClientHandshakeState for ExpectServerHello {
     async fn handle(mut self: Box<Self>, sess: &mut ClientSession, m: Message) -> NextClientHandshakeStateOrError {
-        
+        // 检查收到的消息
+        StateChangeError::check_receive_message(&m, &[ContentType::Handshake], &[HandshakeType::ServerHello])?;
+        // 获取消息负载
+        let server_hello = require_handshake_msg!(m, HandshakeType::ServerHello, HandshakePayload::ServerHello)?;
         
         // 状态处理未实现
         return Err(StateChangeError::InternelError("unimplement".to_string()));

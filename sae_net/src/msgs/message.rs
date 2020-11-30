@@ -129,6 +129,10 @@ impl Message {
             ContentType::Handshake => {
                 let data = HandshakeMessagePayload::read(&mut sub).unwrap();
                 MessagePayload::Handshake(data)
+            },
+            ContentType::Alert => {
+                let data = AlertMessagePayload::read(&mut sub).unwrap();
+                MessagePayload::Alert(data)
             }
             _ => {
                 let data = Payload::read(&mut sub).unwrap();

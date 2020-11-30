@@ -5,13 +5,11 @@
 
 use tokio::net::TcpListener;
 
-
-use sae_net::session::{session_duplex::SessionDuplex};
-use sae_net::msgs::type_enums::{ProtocolVersion};
+// use sae_net::msgs::type_enums::ProtocolVersion;
+use sae_net::session::server_config::ServerConfig;
+use sae_net::session::server_session::ServerSession;
+// use sae_net::session::session_duplex::SessionDuplex;
 use std::env;
-use sae_net::session::server_config::{ServerConfig};
-use sae_net::session::server_session::{ServerSession};
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -43,12 +41,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // which will allow all of our clients to be processed concurrently.
         tokio::spawn(async move {
             let config = ServerConfig::new();
-            let mut session = ServerSession::new(socket,config);
+            let mut session = ServerSession::new(socket, config);
             let state_or_error = session.handshake().await;
-            match state_or_error{
-                Ok(_) => {} ,
+            match state_or_error {
+                Ok(_) => {}
                 Err(err) => {
-                    println!("StateChangeError {:?}",err);
+                    println!("handshake error: {:?}", err);
                     return;
                 }
             };

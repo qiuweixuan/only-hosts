@@ -35,7 +35,7 @@ impl AlertMessagePayload {
 
 
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq,Clone)]
 pub enum SaeAlert {
     CloseNotify,
     UnexpectedMessage,
