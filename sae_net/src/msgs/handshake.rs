@@ -1,4 +1,4 @@
-use crate::msgs::base::{PayloadU8};
+use crate::msgs::base::{PayloadU8,PayloadU16};
 use crate::msgs::codec::{self, Codec, Reader};
 use crate::msgs::type_enums::{CipherSuite, HandshakeType, NamedGroup};
 
@@ -123,6 +123,50 @@ impl Codec for ServerHelloPayload {
 }
 
 
+// AuthCommitPayload负载
+#[derive(Debug)]
+pub struct AuthCommitPayload {
+    pub scalar: PayloadU16,
+    pub element: PayloadU16,
+}
+
+impl Codec for AuthCommitPayload {
+    fn encode(&self, bytes: &mut Vec<u8>) {
+        self.scalar.encode(bytes);
+        self.element.encode(bytes);
+    }
+
+    fn read(r: &mut Reader) -> Option<AuthCommitPayload> {
+        let ret = AuthCommitPayload {
+            scalar: PayloadU16::read(r)?,
+            element: PayloadU16::read(r)?,
+        };
+        Some(ret)
+    }
+}
+
+
+// AuthConfirmPayload负载
+#[derive(Debug)]
+pub struct AuthConfirmPayload {
+    pub confirm: PayloadU8,
+}
+
+impl Codec for AuthConfirmPayload {
+    fn encode(&self, bytes: &mut Vec<u8>) {
+        self.confirm.encode(bytes);
+    }
+
+    fn read(r: &mut Reader) -> Option<AuthConfirmPayload> {
+        let ret = AuthConfirmPayload {
+            confirm: PayloadU8::read(r)?,
+        };
+        Some(ret)
+    }
+}
+
+
+
 
 
 // 握手协议负载（不带类型和长度）
@@ -130,6 +174,11 @@ impl Codec for ServerHelloPayload {
 pub enum HandshakePayload {
     ClientHello(ClientHelloPayload),
     ServerHello(ServerHelloPayload),
+    ClientAuthCommit(AuthCommitPayload),
+    ServerAuthCommit(AuthCommitPayload),
+    ClientAuthConfirm(AuthConfirmPayload),
+    ServerAuthConfirm(AuthConfirmPayload),
+
 }
 
 impl HandshakePayload {
@@ -137,6 +186,10 @@ impl HandshakePayload {
         match *self {
             HandshakePayload::ClientHello(ref x) => x.encode(bytes),
             HandshakePayload::ServerHello(ref x) => x.encode(bytes),
+            HandshakePayload::ClientAuthCommit(ref x) => x.encode(bytes),
+            HandshakePayload::ServerAuthCommit(ref x) => x.encode(bytes),
+            HandshakePayload::ClientAuthConfirm(ref x) => x.encode(bytes),
+            HandshakePayload::ServerAuthConfirm(ref x) => x.encode(bytes),
         }
     }
 }
@@ -170,11 +223,22 @@ impl Codec for HandshakeMessagePayload {
         let payload = match typ {
             HandshakeType::ClientHello => {
                 HandshakePayload::ClientHello(ClientHelloPayload::read(&mut sub)?)
-            }
+            },
             HandshakeType::ServerHello => {
                 HandshakePayload::ServerHello(ServerHelloPayload::read(&mut sub)?)
-            }
-
+            },
+            HandshakeType::ClientAuthCommit => {
+                HandshakePayload::ClientAuthCommit(AuthCommitPayload::read(&mut sub)?)
+            },
+            HandshakeType::ServerAuthCommit => {
+                HandshakePayload::ServerAuthCommit(AuthCommitPayload::read(&mut sub)?)
+            },
+            HandshakeType::ClientAuthConfirm => {
+                HandshakePayload::ClientAuthConfirm(AuthConfirmPayload::read(&mut sub)?)
+            },
+            HandshakeType::ServerAuthConfirm => {
+                HandshakePayload::ServerAuthConfirm(AuthConfirmPayload::read(&mut sub)?)
+            },
             _ => return None,
         };
 

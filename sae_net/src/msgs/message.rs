@@ -198,3 +198,24 @@ impl Message {
         }
     } */
 }
+
+
+impl<'a> Message {
+    pub fn to_borrowed(&'a self) -> BorrowMessage<'a> {
+        if let MessagePayload::Opaque(ref p) = self.payload {
+            BorrowMessage {
+                typ: self.typ,
+                version: self.version,
+                payload: &p.0
+            }
+        } else {
+            unreachable!("to_borrowed must have opaque message");
+        }
+    }
+}
+
+pub struct BorrowMessage<'a> {
+    pub typ: ContentType,
+    pub version: ProtocolVersion,
+    pub payload: &'a [u8],
+}

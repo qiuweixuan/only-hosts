@@ -27,8 +27,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // let mut client_session_duplex = SessionDuplex::new(server_sock);
 
     let client_join = tokio::spawn(async move {
-        // let config = ClientConfig::new();
-        let config = ClientConfig::new_ecc_config();
+        let config = ClientConfig::new();
+        // let config = ClientConfig::new_ecc_config();
 
         let mut session = ClientSession::new(server_sock, config);
         let state_or_error = session.handshake().await;

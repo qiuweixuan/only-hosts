@@ -1,4 +1,3 @@
-// use crate::msgs::enums::{AlertLevel, AlertDescription};
 use crate::msgs::type_enums::{AlertLevel, AlertDescription};
 use crate::msgs::codec::{Codec, Reader};
 

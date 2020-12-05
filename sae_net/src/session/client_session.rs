@@ -1,13 +1,17 @@
-use crate::session::{client_config::ClientConfig, session_duplex::SessionDuplex};
 use tokio::net::TcpStream;
 
+use crate::session::{client_config::ClientConfig, session_duplex::SessionDuplex};
 use crate::session::client_state::{self, ClientHandshakeState, InitialClientHandshakeState};
 use crate::session::error::StateChangeError;
-// use std::sync::Arc;
+
+use crate::msgs::type_enums::{CipherSuite,NamedGroup};
+
 
 pub struct ClientSession {
     pub duplex: SessionDuplex,
     pub config: ClientConfig,
+    pub choose_ciphersuite: Option<CipherSuite>,
+    pub choose_namedgroup: Option<NamedGroup>
 }
 
 impl ClientSession {
@@ -15,6 +19,8 @@ impl ClientSession {
         ClientSession {
             duplex: SessionDuplex::new(sock),
             config,
+            choose_ciphersuite: None,
+            choose_namedgroup: None,
         }
     }
     pub async fn handshake(&mut self) -> Result<(), StateChangeError> {
