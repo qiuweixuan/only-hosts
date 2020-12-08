@@ -3,7 +3,7 @@ use crate::msgs::codec::{Codec, Reader};
 use crate::msgs::handshake::HandshakeMessagePayload;
 use crate::msgs::type_enums::{ContentType, HandshakeType, ProtocolVersion};
 use crate::msgs::alert::{AlertMessagePayload,SaeAlert};
-
+use std::mem;
 
 
 // SAE消息体负载
@@ -168,7 +168,7 @@ impl Message {
     }
 
 
-    /*  pub fn take_payload(self) -> Vec<u8> {
+     pub fn take_payload(self) -> Vec<u8> {
         // self.into_opaque().take_opaque_payload().unwrap().0
         let mut buf = Vec::new();
         self.payload.encode(&mut buf);
@@ -196,7 +196,7 @@ impl Message {
             version: self.version,
             payload: MessagePayload::new_opaque(buf),
         }
-    } */
+    }
 }
 
 

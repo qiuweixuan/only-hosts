@@ -31,11 +31,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // let config = ClientConfig::new_ecc_config();
 
         let mut session = ClientSession::new(server_sock, config);
-        let state_or_error = session.handshake().await;
-        match state_or_error {
-            Ok(_) => {}
+        let handshake_result = session.handshake().await;
+        match handshake_result {
+            Ok(_) => {
+                println!("handshake success");
+            }
             Err(err) => {
                 println!("handshake error: {:?}", err);
+                return;
+            }
+        };
+
+        let payload = Vec::<u8>::from("Hello World");
+        let send_msg_result = session.send_msg_payload(&payload).await;
+        match send_msg_result {
+            Ok(_) => {
+                println!("send payload: {:?}", String::from_utf8(payload));
+            }
+            Err(err) => {
+                println!("send payload error: {:?}", err);
                 return;
             }
         };

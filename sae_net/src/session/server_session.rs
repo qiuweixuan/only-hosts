@@ -1,16 +1,21 @@
 use tokio::net::TcpStream;
+use ring::{aead, hkdf};
 
 use crate::session::{server_config::ServerConfig, session_duplex::SessionDuplex};
 use crate::session::error::StateChangeError;
 use crate::session::server_state::{self, ExpectClientHello};
-
+use crate::session::common::{SessionRandoms,SessionCommon};
+use crate::msgs::handshake::Random;
 use crate::msgs::type_enums::{CipherSuite,NamedGroup};
+use crate::msgs::message::{Message, MessagePayload};
+use crate::msgs::type_enums::ContentType;
 
 pub struct ServerSession {
     pub duplex: SessionDuplex,
     pub config: ServerConfig,
     pub choose_ciphersuite: Option<CipherSuite>,
-    pub choose_namedgroup: Option<NamedGroup>
+    pub choose_namedgroup: Option<NamedGroup>,
+    pub common: SessionCommon,
 }
 
 impl ServerSession {
@@ -20,6 +25,7 @@ impl ServerSession {
             config,
             choose_ciphersuite: None,
             choose_namedgroup: None,
+            common: SessionCommon::new(),
         }
     }
     pub async fn handshake(&mut self) -> Result<(), StateChangeError> {
@@ -50,6 +56,55 @@ impl ServerSession {
                 return Err(StateChangeError::InvalidTransition);
             }
         }
+
+        let client_random = Random::from_slice(&b"\x02\x00\x00\x00\x01\x00"[..]).clone_inner();
+        let server_random = Random::from_slice(&b"\x02\x00\x00\x00\x00\x00"[..]).clone_inner();
+        let hkdf_algo = &hkdf::HKDF_SHA256;
+        let aead_algo = &aead::AES_256_GCM;
+        let handshake_secret_hex_str =
+            "59bcf341b58ae026f07f3d704eabda760636a83a75a3ff2fa130b263c0848e17";
+        let handshake_secret = hex::decode(handshake_secret_hex_str).unwrap();
+        let server_randoms = SessionRandoms {
+            we_are_client: false,
+            client: client_random.clone(),
+            server: server_random.clone(),
+        };
+    
+        self.common.init_sae10_enc_dec(&handshake_secret,&server_randoms, hkdf_algo, aead_algo);
+
+
         Ok(())
+    }
+
+    pub async fn recv_msg_payload(&mut self) -> Result<Vec<u8>, StateChangeError> {
+        // 接收信息
+        let result = self.common.recv_msg(&mut self.duplex).await;
+        let message = match result {
+            Err(err) => {
+                // 统一错误处理
+                err.handle_error(&mut self.duplex, &self.config.protocal_version)
+                    .await;
+                return Err(err);
+            }
+            Ok(message) => message,
+        };
+        let payload = if let Some(mut received_message) = message {
+            received_message.take_opaque_payload().unwrap().0
+        } else {
+            Vec::<u8>::new()
+        };
+
+        return Ok(payload);
+    }
+
+    pub async fn send_msg_payload(&mut self, payload: &[u8]) -> Result<(), StateChangeError> {
+        let msg = Message {
+            typ: ContentType::ApplicationData,
+            version: self.config.protocal_version.clone(),
+            payload: MessagePayload::new_opaque(payload.to_vec()),
+        };
+        // 发送信息
+        self.common.send_msg(&mut self.duplex, msg).await?;
+        return Ok(());
     }
 }

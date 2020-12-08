@@ -9,7 +9,7 @@ use crate::msgs::type_enums::{CipherSuite, ContentType, HandshakeType, NamedGrou
 use crate::session::{error::StateChangeError, server_session::ServerSession, suites};
 
 use async_trait::async_trait;
-use hex;
+// use hex;
 
 pub type NextServerHandshakeState = Box<dyn ServerHandshakeState + Send + Sync>;
 pub type NextServerHandshakeStateOrError = Result<NextServerHandshakeState, StateChangeError>;

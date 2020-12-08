@@ -41,7 +41,8 @@ pub enum SaeAlert {
     HandshakeFailure,
     IllegalParameter,
     DecodeError,
-    DecryptError
+    DecryptError,
+    BadRecordMac,
 }
 
 impl SaeAlert {
@@ -70,6 +71,10 @@ impl SaeAlert {
             SaeAlert::DecryptError => AlertMessagePayload {
                 level: AlertLevel::Fatal,
                 description: AlertDescription::DecryptError
+            },
+            SaeAlert::BadRecordMac => AlertMessagePayload {
+                level: AlertLevel::Fatal,
+                description: AlertDescription::BadRecordMac
             },
         }
     }

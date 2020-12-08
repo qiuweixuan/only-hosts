@@ -61,7 +61,15 @@ impl Random {
         let buf = self.get_encoding();
         bytes.write_all(&buf).unwrap();
     }
+
+    pub fn clone_inner(&self) -> [u8; RANDOM_LEN]{
+        self.0.clone()
+    }
+
+    pub const LEN: usize = RANDOM_LEN;
 }
+
+
 
 // CipherSuites类型声明: 数组总长度前缀为u16,之后存多个加密组件编码
 declare_u16_vec!(CipherSuites, CipherSuite);

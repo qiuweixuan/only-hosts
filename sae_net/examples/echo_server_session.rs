@@ -42,14 +42,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tokio::spawn(async move {
             let config = ServerConfig::new();
             let mut session = ServerSession::new(socket, config);
-            let state_or_error = session.handshake().await;
-            match state_or_error {
-                Ok(_) => {}
+            let handshake_result = session.handshake().await;
+            match handshake_result {
+                Ok(_) => {
+                    println!("handshake success");
+                }
                 Err(err) => {
                     println!("handshake error: {:?}", err);
                     return;
                 }
             };
+            let recv_msg_result = session.recv_msg_payload().await;
+            match recv_msg_result {
+                Ok(payload) => {
+                    println!("recv payload: {:?}",String::from_utf8(payload));
+                }
+                Err(err) => {
+                    println!("recv payload error: {:?}", err);
+                    return;
+                }
+            };
+
             println!("Socket received FIN packet and closed connection");
         });
     }
