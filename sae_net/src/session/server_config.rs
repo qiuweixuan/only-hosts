@@ -11,7 +11,7 @@ pub struct ServerConfig {
 impl ServerConfig{
     pub fn new() -> ServerConfig{
         let cipher_suites = vec![ CipherSuite::FFCPWD_AES_128_GCM_SHA256, CipherSuite::FFCPWD_AES_256_GCM_SHA384];
-        let name_groups = vec![NamedGroup::FFDHE3072,NamedGroup::FFDHE4096];
+        let name_groups = vec![NamedGroup::FFDHE3072];
         let protocal_version = ProtocolVersion::SAEv1_0;
 
         ServerConfig {

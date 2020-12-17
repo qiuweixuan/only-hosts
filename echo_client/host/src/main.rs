@@ -1,29 +1,7 @@
-//! An example of hooking up stdin/stdout to either a TCP or UDP stream.
-//!
-//! This example will connect to a socket address specified in the argument list
-//! and then forward all data read on stdin to the server, printing out all data
-//! received on stdout. An optional `--udp` argument can be passed to specify
-//! that the connection should be made over UDP instead of TCP, translating each
-//! line entered on stdin to a UDP packet to be sent to the remote address.
-//!
-//! Note that this is not currently optimized for performance, especially
-//! around buffer management. Rather it's intended to show an example of
-//! working with a client.
-//!
-//! This example can be quite useful when interacting with the other examples in
-//! this repository! Many of them recommend running this as a simple "hook up
-//! stdin/stdout to a server" to get up and running.
-
-//!     cargo run --example print_each_packet_length
-//!     cargo run --example connect_length 127.0.0.1:8082
+//!     cargo run --example echo_server
+//!     cargo run --example echo_client_session 127.0.0.1:8082
 
 #![warn(rust_2018_idioms)]
-
-use futures::StreamExt;
-// use tokio::io;
-use tokio::prelude::*;
-// use tokio_util::codec::{FramedRead, LinesCodec,Encoder,LengthDelimitedCodec};
-use tokio_util::codec::{LengthDelimitedCodec};
 
 use std::env;
 use std::error::Error;
@@ -31,84 +9,72 @@ use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::try_join;
 
-// use bytes::{BytesMut,Bytes};
-
-use sae_net::msgs::message::{Message,MessagePayload};
-use sae_net::msgs::handshake::{HandshakePayload, HandshakeMessagePayload, ClientHelloPayload,Random};
-use sae_net::msgs::type_enums::{HandshakeType,CipherSuite,NamedGroup,ContentType,ProtocolVersion};
-use sae_net::msgs::base::{PayloadU8};
-use sae_net::msgs::codec::{Codec};
+use sae_core::SaeCaContext;
+use sae_net::session::client_config::ClientConfig;
+use sae_net::session::client_session::ClientSession;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // Determine if we're going to run in TCP or UDP mode
+    // 获取命令行参数
     let args = env::args().skip(1).collect::<Vec<_>>();
 
     // Parse what address we're going to connect to
+    // socket地址解析
     let addr = args
         .first()
         .ok_or("this program requires at least one argument")?;
     let addr = addr.parse::<SocketAddr>()?;
 
+    // 获取请求的TCP服务端连接
     let server_sock = TcpStream::connect(addr).await?;
-    let (read_half, mut write_half) = server_sock.into_split();
 
-    // stdin -> write_half  task
-    let read_join = tokio::spawn(async move {
-        
-        let client_random =  Random::from_slice(&b"\x02\x00\x00\x00\x01\x00"[..]);
-        let client_cipher_suites = vec![ CipherSuite::FFCPWD_AES_128_GCM_SHA256, CipherSuite::FFCPWD_AES_256_GCM_SHA384];
-        let clinet_name_groups = vec![NamedGroup::FFDHE3072,NamedGroup::FFDHE4096];
-        let clinet_pwd_name = PayloadU8::new(Vec::<u8>::from("root"));
+    // 获取客户端配置
+    let config = ClientConfig::new();
+    // let config = ClientConfig::new_ecc_config();
+    // 创建客户端SAE—NET会话
+    let mut session = ClientSession::new(server_sock, config);
 
-        let chp = HandshakeMessagePayload {
-            typ: HandshakeType::ClientHello,
-            payload: HandshakePayload::ClientHello(ClientHelloPayload {
-                random: client_random,
-                cipher_suites: client_cipher_suites,
-                name_groups: clinet_name_groups,
-                pwd_name: clinet_pwd_name,
-            }),
-        };
-        let ch = Message {
-            typ: ContentType::Handshake,
-            version: ProtocolVersion::SAEv1_0,
-            payload: MessagePayload::Handshake(chp),
-        };
+    // 获取请求的CA服务端上下文
+    let mut ctx = SaeCaContext::new_ctx();
 
-        println!("Sending ClientHello {:#?}", ch);
+    // 进行SAE握手过程
+    {
+        // 获取请求的CA服务端会话连接
+        let mut ca_session = SaeCaContext::new_session(&mut ctx).expect("new ca_session error!");
+        if let Err(err) = session.handshake().await {
+            println!("handshake error: {:?}", err);
+            return Ok(());
+        } else {
+            println!("handshake success");
+        }
+    }
 
-        let buf = ch.get_encoding();
-
-        println!(" ClientHello buf: {:?}", buf.len());
-
-        write_half.write_all(&buf).await.unwrap();
-    });
-
-    // read_half -> stdout  task
-    let write_join = tokio::spawn(async move {
-
-        let mut read_server = LengthDelimitedCodec::builder()
-                .length_field_offset(3) // length of type + version
-                .length_field_length(2)  // length of payload_len
-                .length_adjustment(5) // length of header
-                .num_skip(0)           //goto start location
-                .new_read(read_half);
-
-        if let Some(message) = read_server.next().await {
-            match message {
-                Ok(bytes) => {
-                    let ch = Message::read_bytes(bytes.as_ref());
-                    println!("Sending ClientHello {:#?}", ch);
-                }
-                Err(err) => println!("closed with error: {:?}", err),
+    // 使用SAE会话进行数据传输，执行请求任务
+    let client_join = tokio::spawn(async move {
+        // 发送数据
+        let payload = Vec::<u8>::from("Hello World");
+        if let Err(err) = session.send_msg_payload(&payload).await {
+            println!("send payload error: {:?}", err);
+            return;
+        } else {
+            println!("send payload: {:?}", String::from_utf8(payload).unwrap());
+        }
+        // 获取数据
+        match session.recv_msg_payload().await {
+            Ok(payload) => {
+                println!("recv payload: {:?}", String::from_utf8(payload));
+            }
+            Err(err) => {
+                println!("recv payload error: {:?}", err);
+                return;
             }
         };
     });
-    
 
-    if let Err(e) = try_join!(read_join, write_join) {
-        println!("read_join or write_join failed, error={}", e);
+    // 等待任务执行完
+    if let Err(e) = try_join!(client_join) {
+        println!("client_task failed, error={}", e);
     };
 
     Ok(())

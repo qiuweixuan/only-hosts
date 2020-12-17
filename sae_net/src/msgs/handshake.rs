@@ -74,7 +74,7 @@ impl Random {
 // CipherSuites类型声明: 数组总长度前缀为u16,之后存多个加密组件编码
 declare_u16_vec!(CipherSuites, CipherSuite);
 
-// NameGroups类型声明
+// NamedGroups类型声明
 declare_u16_vec!(NamedGroups, NamedGroup);
 
 // ClientHello负载

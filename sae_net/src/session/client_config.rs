@@ -13,7 +13,7 @@ pub struct ClientConfig {
 impl ClientConfig{
     pub fn new() -> ClientConfig{
         let cipher_suites = vec![ CipherSuite::FFCPWD_AES_128_GCM_SHA256, CipherSuite::FFCPWD_AES_256_GCM_SHA384];
-        let name_groups = vec![NamedGroup::FFDHE3072,NamedGroup::FFDHE4096];
+        let name_groups = vec![NamedGroup::FFDHE3072];
         let pwd_name = PayloadU8::new(Vec::<u8>::from("root"));
         let protocal_version = ProtocolVersion::SAEv1_0;
 
