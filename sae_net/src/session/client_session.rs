@@ -10,6 +10,8 @@ use crate::session::common::{SessionCommon, SessionRandoms};
 use crate::session::error::StateChangeError;
 use crate::session::{client_config::ClientConfig, session_duplex::SessionDuplex};
 
+use sae_core::SaeCaContext;
+
 pub struct ClientSession {
     pub duplex: SessionDuplex,
     pub config: ClientConfig,
@@ -29,8 +31,16 @@ impl ClientSession {
         }
     }
     pub async fn handshake(&mut self) -> Result<(), StateChangeError> {
+        
+
+        let mut ca_ctx = SaeCaContext::new_ctx()
+            .map_err(StateChangeError::convert_error_fn("create ca_ctx error!"))?;
+        let mut ca_session = SaeCaContext::new_session(&mut ca_ctx)
+            .map_err(StateChangeError::convert_error_fn("create ca_session error!"))?;
+        
+
         // 启动握手
-        if let Err(err) = self.inner_handshake().await {
+        if let Err(err) = self.inner_handshake(&mut ca_session).await {
             // 统一错误处理
             err.handle_error(&mut self.duplex, &self.config.protocal_version)
                 .await;
@@ -41,7 +51,8 @@ impl ClientSession {
         return Ok(());
     }
 
-    async fn inner_handshake(&mut self) -> Result<(), StateChangeError> {
+    async fn inner_handshake<'a>(&mut self,ca_session: &mut SaeCaContext<'a>) -> Result<(), StateChangeError> {
+        ca_session.test();
         // 初始化状态
         let init_state = Box::new(InitialClientHandshakeState::new());
         let client_hello_message = init_state.initial_client_hello(self);
@@ -112,3 +123,5 @@ impl ClientSession {
         return Ok(());
     }
 }
+
+

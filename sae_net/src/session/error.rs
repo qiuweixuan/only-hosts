@@ -88,4 +88,10 @@ impl StateChangeError {
         }
        
     }
+
+    pub fn convert_error_fn<T>(error_str: &str) ->  impl FnOnce(T) ->  Self{
+        let error_str = error_str.to_string();
+        let error_closer = move |_| { StateChangeError::InternelError(error_str) };
+        return error_closer;
+    }
 }
