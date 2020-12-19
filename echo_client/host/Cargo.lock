@@ -633,6 +633,7 @@ dependencies = [
  "hex 0.4.2",
  "once_cell",
  "ring",
+ "sae_core",
  "tokio",
  "tokio-util",
 ]

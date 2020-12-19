@@ -66,6 +66,8 @@ impl PayloadU16 {
         (slice.len() as u16).encode(bytes);
         bytes.extend_from_slice(slice);
     }
+
+    pub fn into_inner(self) -> Vec<u8> { self.0 }
 }
 
 impl Codec for PayloadU16 {

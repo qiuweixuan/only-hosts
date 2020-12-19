@@ -9,7 +9,6 @@ use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::try_join;
 
-use sae_core::SaeCaContext;
 use sae_net::session::client_config::ClientConfig;
 use sae_net::session::client_session::ClientSession;
 
@@ -35,19 +34,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // 创建客户端SAE—NET会话
     let mut session = ClientSession::new(server_sock, config);
 
-    // 获取请求的CA服务端上下文
-    let mut ctx = SaeCaContext::new_ctx();
 
     // 进行SAE握手过程
-    {
-        // 获取请求的CA服务端会话连接
-        let mut ca_session = SaeCaContext::new_session(&mut ctx).expect("new ca_session error!");
-        if let Err(err) = session.handshake().await {
-            println!("handshake error: {:?}", err);
-            return Ok(());
-        } else {
-            println!("handshake success");
-        }
+    /* if let Err(err) = session.handshake().await {
+        println!("handshake error: {:?}", err);
+        return Ok(());
+    } else {
+        println!("handshake success");
+    } */
+    if let Err(err) = session.handshake_with_ca().await {
+        println!("handshake error: {:?}", err);
+        return Ok(());
+    } else {
+        println!("handshake success");
     }
 
     // 使用SAE会话进行数据传输，执行请求任务

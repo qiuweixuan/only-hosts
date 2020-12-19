@@ -27,20 +27,17 @@ impl SessionRandoms {
     //         server: [0u8; Random::LEN],
     //     };
 
-    //     rand::fill_random(&mut ret.server);
     //     ret
     // }
 
-    // pub fn for_client() -> SessionRandoms {
-    //     let mut ret = SessionRandoms {
-    //         we_are_client: true,
-    //         client: [0u8; Random::LEN],
-    //         server: [0u8; Random::LEN],
-    //     };
-
-    //     rand::fill_random(&mut ret.client);
-    //     ret
-    // }
+    pub fn for_client() -> SessionRandoms {
+        let ret = SessionRandoms {
+            we_are_client: true,
+            client: [0u8; Random::LEN],
+            server: [0u8; Random::LEN],
+        };
+        ret
+    }
 
     pub fn join_client_server_randoms(&self) -> [u8; 2 * Random::LEN] {
         let mut randoms = [0u8; 2 * Random::LEN];

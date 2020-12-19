@@ -5,7 +5,7 @@
 
 use tokio::net::TcpListener;
 
-use sae_core::SaeCaContext;
+
 use sae_net::session::server_config::ServerConfig;
 use sae_net::session::server_session::ServerSession;
 use std::env;
@@ -30,9 +30,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(&addr).await?;
     println!("Listening on: {}", addr);
 
-    // 获取请求的CA服务端上下文
-    let mut ca_ctx = SaeCaContext::new_ctx();
-
     loop {
         // Asynchronously wait for an inbound socket.
         // 获取客户端连接
@@ -45,19 +42,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut session = ServerSession::new(socket, config);
 
         // 进行SAE握手过程
-        {
-            // 获取请求的CA服务端会话连接
-            let mut ca_session =
-                SaeCaContext::new_session(&mut ca_ctx).expect("new ca_session error!");
-            
-            if let Err(err) = session.handshake().await {
-                println!("handshake error: {:?}", err);
-                continue;
-            } else {
-                println!("handshake success");
-            }
+        if let Err(err) = session.handshake().await {
+            println!("handshake error: {:?}", err);
+            continue;
+        } else {
+            println!("handshake success");
         }
-
         // And this is where much of the magic of this server happens. We
         // crucially want all clients to make progress concurrently, rather than
         // blocking one on completion of another. To achieve this we use the
@@ -71,13 +61,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             loop {
                 let recv_msg = match session.recv_msg_payload().await {
                     Ok(payload) => {
+                        if payload.len() == 0 {
+                            println!("Socket received FIN packet and closed connection");
+                            return;
+                        }
                         let recv_msg = String::from_utf8(payload).unwrap();
                         println!("recv payload: {:?}", recv_msg);
                         recv_msg
                     }
-                    Err(_err) => {
-                        // println!("recv payload error: {:?}", err);
-                        println!("Socket received FIN packet and closed connection");
+                    Err(err) => {
+                        println!("recv payload error: {:?}", err);
                         return;
                     }
                 };
