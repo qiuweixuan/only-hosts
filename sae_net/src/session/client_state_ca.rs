@@ -143,7 +143,6 @@ impl ExpectServerHello {
         let commit_element = ca_session
             .compute_commit_element(client_random, server_random)
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
-
         let scalar_vec = commit_element.scalar;
         let element_vec = commit_element.element;
 
@@ -165,8 +164,8 @@ impl ExpectServerHello {
         return Ok(message);
     }
 
-    // 根据负载设置会话状态
-    fn set_session_state<'a>(
+    // 处理ServerHello消息，根据负载设置会话状态
+    fn handle_server_hello<'a>(
         &self,
         sess: &mut ClientSession,
         ca_session: &mut SaeCaContext<'a>,
@@ -175,6 +174,7 @@ impl ExpectServerHello {
         // 将会话参数设置为与服务器协商好的参数
         sess.choose_ciphersuite = Some(server_hello.cipher_suite.clone());
         sess.choose_namedgroup = Some(server_hello.name_group.clone());
+        // 设置会话随机数
         sess.randoms
             .server
             .as_mut()
@@ -219,7 +219,7 @@ impl ExpectServerHello {
         }
 
         // 将会话参数设置为与服务器协商好的参数
-        self.set_session_state(sess, ca_session, &server_hello)?;
+        self.handle_server_hello(sess, ca_session, &server_hello)?;
 
         /* 构建发送的消息和下一阶段状态 */
 
@@ -331,7 +331,7 @@ pub struct ExpectServerAuthConfirm;
 impl ExpectServerAuthConfirm {
     pub async fn handle<'a>(
         self: Box<Self>,
-        _sess: &mut ClientSession,
+        sess: &mut ClientSession,
         ca_session: &mut SaeCaContext<'a>,
         m: Message,
     ) -> Result<Box<ClientHandshakeFinished>, StateChangeError> {
@@ -353,9 +353,12 @@ impl ExpectServerAuthConfirm {
         let client_pmk = ca_session
             .confirm_exchange(&server_confirm)
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
-        /* if !client_pmk.is_confirm {
+        if !client_pmk.is_confirm {
             return Err(StateChangeError::InternelError("Reject Server Confirm".to_string()));
-        } */
+        }
+        else{
+            sess.handshake_secret = Some(client_pmk.pmk);
+        }
 
         // 创建下一个状态
         let next_state = Box::new(ClientHandshakeFinished {});

@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut session = ServerSession::new(socket, config);
 
         // 进行SAE握手过程
-        if let Err(err) = session.handshake().await {
+        if let Err(err) = session.handshake_with_ca().await {
             println!("handshake error: {:?}", err);
             continue;
         } else {

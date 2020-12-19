@@ -20,15 +20,15 @@ pub struct SessionRandoms {
 }
 
 impl SessionRandoms {
-    // pub fn for_server() -> SessionRandoms {
-    //     let mut ret = SessionRandoms {
-    //         we_are_client: false,
-    //         client: [0u8; Random::LEN],
-    //         server: [0u8; Random::LEN],
-    //     };
+    pub fn for_server() -> SessionRandoms {
+        let mut ret = SessionRandoms {
+            we_are_client: false,
+            client: [0u8; Random::LEN],
+            server: [0u8; Random::LEN],
+        };
 
-    //     ret
-    // }
+        ret
+    }
 
     pub fn for_client() -> SessionRandoms {
         let ret = SessionRandoms {
