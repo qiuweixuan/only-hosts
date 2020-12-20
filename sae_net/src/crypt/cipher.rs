@@ -8,9 +8,9 @@ use crate::session::error::StateChangeError;
 use ring::{aead, hkdf};
 
 #[derive(Debug)]
-pub struct Iv([u8; ring::aead::NONCE_LEN]);
+pub(crate) struct Iv([u8; ring::aead::NONCE_LEN]);
 
-impl Iv {
+/* impl Iv {
     pub fn new(value: [u8; ring::aead::NONCE_LEN]) -> Self {
         Self(value)
     }
@@ -25,7 +25,7 @@ impl Iv {
     pub fn value(&self) -> &[u8; 12] {
         &self.0
     }
-}
+} */
 
 pub(crate) struct IvLen;
 
