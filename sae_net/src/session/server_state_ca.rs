@@ -5,7 +5,7 @@ use crate::msgs::handshake::{
     HandshakePayload, Random, ServerHelloPayload,
 };
 use crate::msgs::message::{Message, MessagePayload};
-use crate::msgs::type_enums::{CipherSuite, ContentType, HandshakeType, NamedGroup};
+use crate::msgs::type_enums::{ContentType, HandshakeType};
 use crate::session::{error::StateChangeError, server_session::ServerSession, suites};
 
 // use pub async_trait::pub async_trait;
@@ -262,7 +262,7 @@ impl ExpectClientAuthCommit {
 
 impl ExpectClientAuthCommit {
     pub async fn handle<'a>(
-        mut self: Box<Self>,
+        self: Box<Self>,
         sess: &mut ServerSession,
         ca_session: &mut SaeCaContext<'a>,
         m: Message,

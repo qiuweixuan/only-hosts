@@ -8,21 +8,21 @@ use crate::session::error::StateChangeError;
 use ring::{aead, hkdf};
 
 #[derive(Debug)]
-pub(crate) struct Iv([u8; ring::aead::NONCE_LEN]);
+pub struct Iv([u8; ring::aead::NONCE_LEN]);
 
 impl Iv {
-    pub(crate) fn new(value: [u8; ring::aead::NONCE_LEN]) -> Self {
+    pub fn new(value: [u8; ring::aead::NONCE_LEN]) -> Self {
         Self(value)
     }
 
-    fn copy(value: &[u8]) -> Self {
+    pub fn copy(value: &[u8]) -> Self {
         debug_assert_eq!(value.len(), ring::aead::NONCE_LEN);
         let mut iv = Iv::new(Default::default());
         iv.0.copy_from_slice(value);
         iv
     }
 
-    pub(crate) fn value(&self) -> &[u8; 12] {
+    pub fn value(&self) -> &[u8; 12] {
         &self.0
     }
 }
@@ -177,7 +177,7 @@ impl MessageDecrypter for SAE10MessageDecrypter {
 
         let content_type = unpad_sae10(&mut buf);
         if content_type == ContentType::Unknown(0) {
-            let msg = "peer sent bad TLSInnerPlaintext".to_string();
+            let _msg = "peer sent bad TLSInnerPlaintext".to_string();
             return Err(decrypt_error.clone());
         }
 

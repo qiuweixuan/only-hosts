@@ -1,5 +1,5 @@
 use crate::crypt::cipher;
-use crate::crypt::cipher::{MessageDecrypter, MessageEncrypter};
+
 use crate::crypt::key_schedule::{self, KeySchedule, SecretKind};
 use crate::msgs::alert::SaeAlert;
 use crate::msgs::fragmenter::{MessageFragmenter, MAX_FRAGMENT_LEN};
@@ -21,7 +21,7 @@ pub struct SessionRandoms {
 
 impl SessionRandoms {
     pub fn for_server() -> SessionRandoms {
-        let mut ret = SessionRandoms {
+        let ret = SessionRandoms {
             we_are_client: false,
             client: [0u8; Random::LEN],
             server: [0u8; Random::LEN],

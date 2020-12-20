@@ -235,7 +235,7 @@ impl ClientHandshakeState for ExpectServerAuthCommit {
             &[HandshakeType::ServerAuthCommit],
         )?;
         // 获取消息负载
-        let server_auth_commit = require_handshake_msg!(
+        let _server_auth_commit = require_handshake_msg!(
             m,
             HandshakeType::ServerAuthCommit,
             HandshakePayload::ServerAuthCommit
@@ -279,7 +279,7 @@ impl ClientHandshakeState for ExpectServerAuthConfirm {
             &[HandshakeType::ServerAuthConfirm],
         )?;
         // 获取消息负载
-        let server_auth_confirm = require_handshake_msg!(
+        let _server_auth_confirm = require_handshake_msg!(
             m,
             HandshakeType::ServerAuthConfirm,
             HandshakePayload::ServerAuthConfirm
