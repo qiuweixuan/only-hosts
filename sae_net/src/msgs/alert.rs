@@ -1,9 +1,7 @@
-use crate::msgs::type_enums::{AlertLevel, AlertDescription};
 use crate::msgs::codec::{Codec, Reader};
+use crate::msgs::type_enums::{AlertDescription, AlertLevel};
 
-
-
-#[derive(Debug,PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AlertMessagePayload {
     pub level: AlertLevel,
     pub description: AlertDescription,
@@ -19,10 +17,7 @@ impl Codec for AlertMessagePayload {
         let level = AlertLevel::read(r)?;
         let description = AlertDescription::read(r)?;
 
-        Some(AlertMessagePayload {
-            level,
-            description,
-        })
+        Some(AlertMessagePayload { level, description })
     }
 }
 
@@ -32,9 +27,7 @@ impl AlertMessagePayload {
     }
 }
 
-
-
-#[derive(Debug,PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SaeAlert {
     CloseNotify,
     UnexpectedMessage,
@@ -46,39 +39,36 @@ pub enum SaeAlert {
 }
 
 impl SaeAlert {
-    pub fn value(&self) -> AlertMessagePayload{
-        match *self{
+    pub fn value(&self) -> AlertMessagePayload {
+        match *self {
             SaeAlert::CloseNotify => AlertMessagePayload {
                 level: AlertLevel::Warning,
-                description: AlertDescription::CloseNotify
+                description: AlertDescription::CloseNotify,
             },
             SaeAlert::UnexpectedMessage => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::UnexpectedMessage
+                description: AlertDescription::UnexpectedMessage,
             },
             SaeAlert::HandshakeFailure => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::HandshakeFailure
+                description: AlertDescription::HandshakeFailure,
             },
             SaeAlert::IllegalParameter => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::IllegalParameter
+                description: AlertDescription::IllegalParameter,
             },
             SaeAlert::DecodeError => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::DecodeError
+                description: AlertDescription::DecodeError,
             },
             SaeAlert::DecryptError => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::DecryptError
+                description: AlertDescription::DecryptError,
             },
             SaeAlert::BadRecordMac => AlertMessagePayload {
                 level: AlertLevel::Fatal,
-                description: AlertDescription::BadRecordMac
+                description: AlertDescription::BadRecordMac,
             },
         }
     }
 }
-
-
-

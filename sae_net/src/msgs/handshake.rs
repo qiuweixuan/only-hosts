@@ -1,4 +1,4 @@
-use crate::msgs::base::{PayloadU8,PayloadU16};
+use crate::msgs::base::{PayloadU16, PayloadU8};
 use crate::msgs::codec::{self, Codec, Reader};
 use crate::msgs::type_enums::{CipherSuite, HandshakeType, NamedGroup};
 
@@ -62,14 +62,12 @@ impl Random {
         bytes.write_all(&buf).unwrap();
     }
 
-    pub fn clone_inner(&self) -> [u8; RANDOM_LEN]{
+    pub fn clone_inner(&self) -> [u8; RANDOM_LEN] {
         self.0.clone()
     }
 
     pub const LEN: usize = RANDOM_LEN;
 }
-
-
 
 // CipherSuites类型声明: 数组总长度前缀为u16,之后存多个加密组件编码
 declare_u16_vec!(CipherSuites, CipherSuite);
@@ -130,7 +128,6 @@ impl Codec for ServerHelloPayload {
     }
 }
 
-
 // AuthCommitPayload负载
 #[derive(Debug)]
 pub struct AuthCommitPayload {
@@ -153,7 +150,6 @@ impl Codec for AuthCommitPayload {
     }
 }
 
-
 // AuthConfirmPayload负载
 #[derive(Debug)]
 pub struct AuthConfirmPayload {
@@ -173,10 +169,6 @@ impl Codec for AuthConfirmPayload {
     }
 }
 
-
-
-
-
 // 握手协议负载（不带类型和长度）
 #[derive(Debug)]
 pub enum HandshakePayload {
@@ -186,7 +178,6 @@ pub enum HandshakePayload {
     ServerAuthCommit(AuthCommitPayload),
     ClientAuthConfirm(AuthConfirmPayload),
     ServerAuthConfirm(AuthConfirmPayload),
-
 }
 
 impl HandshakePayload {
@@ -231,22 +222,22 @@ impl Codec for HandshakeMessagePayload {
         let payload = match typ {
             HandshakeType::ClientHello => {
                 HandshakePayload::ClientHello(ClientHelloPayload::read(&mut sub)?)
-            },
+            }
             HandshakeType::ServerHello => {
                 HandshakePayload::ServerHello(ServerHelloPayload::read(&mut sub)?)
-            },
+            }
             HandshakeType::ClientAuthCommit => {
                 HandshakePayload::ClientAuthCommit(AuthCommitPayload::read(&mut sub)?)
-            },
+            }
             HandshakeType::ServerAuthCommit => {
                 HandshakePayload::ServerAuthCommit(AuthCommitPayload::read(&mut sub)?)
-            },
+            }
             HandshakeType::ClientAuthConfirm => {
                 HandshakePayload::ClientAuthConfirm(AuthConfirmPayload::read(&mut sub)?)
-            },
+            }
             HandshakeType::ServerAuthConfirm => {
                 HandshakePayload::ServerAuthConfirm(AuthConfirmPayload::read(&mut sub)?)
-            },
+            }
             _ => return None,
         };
 
@@ -254,14 +245,10 @@ impl Codec for HandshakeMessagePayload {
         if sub.any_left() {
             None
         } else {
-            Some(HandshakeMessagePayload {
-                typ,
-                payload,
-            })
+            Some(HandshakeMessagePayload { typ, payload })
         }
     }
 }
-
 
 impl HandshakeMessagePayload {
     pub fn length(&self) -> usize {

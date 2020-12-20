@@ -33,5 +33,5 @@ fn bytes_hex() {
     assert_eq!(b.len(), 4);
     assert_eq!(&b[..], b"ab\x01\x0b");
     assert_eq!(format!("{:x}", b), "6162010b");
-    assert_eq!(format!("{:#02X}",b), "6162010B");
+    assert_eq!(format!("{:#02X}", b), "6162010B");
 }

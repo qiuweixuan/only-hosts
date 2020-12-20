@@ -8,10 +8,8 @@ use crate::msgs::message::{Message, MessagePayload};
 use crate::msgs::type_enums::{ContentType, HandshakeType};
 use crate::session::{client_session::ClientSession, error::StateChangeError};
 
-
 use async_trait::async_trait;
 // use sae_core::SaeCaContext;
-
 
 pub type NextClientHandshakeState = Box<dyn ClientHandshakeState + Send + Sync>;
 pub type NextClientHandshakeStateOrError = Result<NextClientHandshakeState, StateChangeError>;

@@ -169,9 +169,7 @@ impl SessionCommon {
         hkdf_algo: &hkdf::Algorithm,
         aead_algo: &'static aead::Algorithm,
     ) {
-
-        let master_secret =
-            SessionSecrets::new(&randoms, &hkdf_algo, &handshake_secret);
+        let master_secret = SessionSecrets::new(&randoms, &hkdf_algo, &handshake_secret);
 
         let (read_decrypter, write_encrypter) =
             cipher::new_sae10_cipher_pair(&aead_algo, &master_secret);

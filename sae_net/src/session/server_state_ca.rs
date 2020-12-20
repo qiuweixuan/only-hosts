@@ -231,7 +231,6 @@ impl ExpectClientAuthCommit {
         ca_session: &mut SaeCaContext<'a>,
         client_auth_commit: &AuthCommitPayload,
     ) -> Result<Message, StateChangeError> {
-        
         let client_scalar = client_auth_commit.scalar.clone().into_inner();
         let client_element = client_auth_commit.element.clone().into_inner();
 
@@ -282,7 +281,7 @@ impl ExpectClientAuthCommit {
         )?;
 
         // 构建ServerAuthConfirm消息
-        let auth_confirm = self.initial_auth_confirm(sess,ca_session,&client_auth_commit)?;
+        let auth_confirm = self.initial_auth_confirm(sess, ca_session, &client_auth_commit)?;
 
         println!("Send ServerAuthConfirm message : \n {:?}", auth_confirm);
 
@@ -331,12 +330,12 @@ impl ExpectClientAuthConfirm {
             .confirm_exchange(&client_confirm)
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
         if !server_pmk.is_confirm {
-            return Err(StateChangeError::InternelError("Reject Client Confirm".to_string()));
-        }
-        else{
+            return Err(StateChangeError::InternelError(
+                "Reject Client Confirm".to_string(),
+            ));
+        } else {
             sess.handshake_secret = Some(server_pmk.pmk);
         }
-
 
         // 创建下一个状态
         let next_state = Box::new(ServerHandshakeFinished {});

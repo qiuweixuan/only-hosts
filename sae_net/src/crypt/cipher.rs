@@ -1,13 +1,11 @@
-use ring::{aead, hkdf};
+use crate::msgs::alert::SaeAlert;
+use crate::msgs::codec::{self, Codec};
+use crate::msgs::fragmenter;
+use crate::msgs::message::{BorrowMessage, Message, MessagePayload};
+use crate::msgs::type_enums::{ContentType, ProtocolVersion};
 use crate::session::common::SessionSecrets;
 use crate::session::error::StateChangeError;
-use crate::msgs::message::{BorrowMessage, Message, MessagePayload};
-use crate::msgs::codec::{self,Codec};
-use crate::msgs::type_enums::{ContentType, ProtocolVersion};
-use crate::msgs::alert::SaeAlert;
-use crate::msgs::fragmenter;
-
-
+use ring::{aead, hkdf};
 
 #[derive(Debug)]
 pub(crate) struct Iv([u8; ring::aead::NONCE_LEN]);
@@ -24,13 +22,17 @@ impl Iv {
         iv
     }
 
-    pub(crate) fn value(&self) -> &[u8; 12] { &self.0 }
+    pub(crate) fn value(&self) -> &[u8; 12] {
+        &self.0
+    }
 }
 
 pub(crate) struct IvLen;
 
 impl hkdf::KeyType for IvLen {
-    fn len(&self) -> usize { aead::NONCE_LEN }
+    fn len(&self) -> usize {
+        aead::NONCE_LEN
+    }
 }
 
 impl From<hkdf::Okm<'_, IvLen>> for Iv {
@@ -42,12 +44,12 @@ impl From<hkdf::Okm<'_, IvLen>> for Iv {
 }
 
 /// Objects with this trait can decrypt TLS messages.
-pub trait MessageDecrypter : Send + Sync {
+pub trait MessageDecrypter: Send + Sync {
     fn decrypt(&self, m: Message, seq: u64) -> Result<Message, StateChangeError>;
 }
 
 /// Objects with this trait can encrypt TLS messages.
-pub trait MessageEncrypter : Send + Sync {
+pub trait MessageEncrypter: Send + Sync {
     fn encrypt(&self, m: BorrowMessage, seq: u64) -> Result<Message, StateChangeError>;
 }
 
@@ -70,7 +72,9 @@ pub struct InvalidMessageEncrypter {}
 
 impl MessageEncrypter for InvalidMessageEncrypter {
     fn encrypt(&self, _m: BorrowMessage, _seq: u64) -> Result<Message, StateChangeError> {
-        Err(StateChangeError::InternelError("encrypt not yet available".to_string()))
+        Err(StateChangeError::InternelError(
+            "encrypt not yet available".to_string(),
+        ))
     }
 }
 
@@ -79,7 +83,9 @@ pub struct InvalidMessageDecrypter {}
 
 impl MessageDecrypter for InvalidMessageDecrypter {
     fn decrypt(&self, _m: Message, _seq: u64) -> Result<Message, StateChangeError> {
-        Err(StateChangeError::InternelError("decrypt not yet available".to_string()))
+        Err(StateChangeError::InternelError(
+            "decrypt not yet available".to_string(),
+        ))
     }
 }
 
@@ -116,7 +122,7 @@ fn make_sae10_nonce(iv: &Iv, seq: u64) -> ring::aead::Nonce {
     aead::Nonce::assume_unique_for_key(nonce)
 }
 
-fn make_sae10_aad(len: usize) -> ring::aead::Aad<[u8; 1 + 2 + 2]>{
+fn make_sae10_aad(len: usize) -> ring::aead::Aad<[u8; 1 + 2 + 2]> {
     ring::aead::Aad::from([
         0x17, // ContentType::ApplicationData
         0x10, // ProtocolVersion (major)
@@ -136,7 +142,8 @@ impl MessageEncrypter for SAE10MessageEncrypter {
         let nonce = make_sae10_nonce(&self.iv, seq);
         let aad = make_sae10_aad(total_len);
 
-        self.enc_key.seal_in_place_append_tag(nonce, aad, &mut buf)
+        self.enc_key
+            .seal_in_place_append_tag(nonce, aad, &mut buf)
             .map_err(|_| StateChangeError::InternelError("encrypt failed".to_string()))?;
 
         Ok(Message {
@@ -149,13 +156,9 @@ impl MessageEncrypter for SAE10MessageEncrypter {
 
 impl MessageDecrypter for SAE10MessageDecrypter {
     fn decrypt(&self, mut msg: Message, seq: u64) -> Result<Message, StateChangeError> {
-        let decrypt_error = StateChangeError::AlertSend(
-            SaeAlert::BadRecordMac,
-        );
+        let decrypt_error = StateChangeError::AlertSend(SaeAlert::BadRecordMac);
 
-
-        let payload = msg.take_opaque_payload()
-            .ok_or(decrypt_error.clone())?;
+        let payload = msg.take_opaque_payload().ok_or(decrypt_error.clone())?;
         let mut buf = payload.0;
 
         if buf.len() < self.dec_key.algorithm().tag_len() {
@@ -164,7 +167,9 @@ impl MessageDecrypter for SAE10MessageDecrypter {
 
         let nonce = make_sae10_nonce(&self.iv, seq);
         let aad = make_sae10_aad(buf.len());
-        let plain_len = self.dec_key.open_in_place(nonce, aad, &mut buf)
+        let plain_len = self
+            .dec_key
+            .open_in_place(nonce, aad, &mut buf)
             .map_err(|_| decrypt_error.clone())?
             .len();
 
@@ -206,10 +211,13 @@ impl SAE10MessageDecrypter {
     }
 }
 
-pub fn new_sae10_cipher_pair(aead_algo: &'static aead::Algorithm, secrets: &SessionSecrets) -> MessageCipherPair{
+pub fn new_sae10_cipher_pair(
+    aead_algo: &'static aead::Algorithm,
+    secrets: &SessionSecrets,
+) -> MessageCipherPair {
     let (write_key, write_iv, read_key, read_iv) = secrets.new_key_iv(aead_algo);
     (
-        Box::new(SAE10MessageDecrypter::new(read_key,read_iv)),
-        Box::new(SAE10MessageEncrypter::new(write_key,write_iv)),
+        Box::new(SAE10MessageDecrypter::new(read_key, read_iv)),
+        Box::new(SAE10MessageEncrypter::new(write_key, write_iv)),
     )
 }

@@ -67,7 +67,9 @@ impl PayloadU16 {
         bytes.extend_from_slice(slice);
     }
 
-    pub fn into_inner(self) -> Vec<u8> { self.0 }
+    pub fn into_inner(self) -> Vec<u8> {
+        self.0
+    }
 }
 
 impl Codec for PayloadU16 {
@@ -96,7 +98,9 @@ impl PayloadU8 {
         PayloadU8(Vec::new())
     }
 
-    pub fn into_inner(self) -> Vec<u8> { self.0 }
+    pub fn into_inner(self) -> Vec<u8> {
+        self.0
+    }
 }
 
 impl Codec for PayloadU8 {

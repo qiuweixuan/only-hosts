@@ -1,4 +1,4 @@
-use crate::msgs::alert::{SaeAlert};
+use crate::msgs::alert::SaeAlert;
 use crate::msgs::codec::{Codec, Reader};
 use crate::msgs::message::Message;
 use crate::msgs::type_enums::ProtocolVersion;
@@ -110,7 +110,10 @@ impl SessionDuplex {
         return Ok(None);
     }
 
-    pub async fn write_one_message_or_err(&mut self, message: Message) -> Result<(), StateChangeError> {
+    pub async fn write_one_message_or_err(
+        &mut self,
+        message: Message,
+    ) -> Result<(), StateChangeError> {
         let buf = message.get_encoding();
         match self.write_half.write_all(&buf).await {
             Err(err) => {
@@ -120,6 +123,4 @@ impl SessionDuplex {
             Ok(()) => Ok(()),
         }
     }
-
-
 }

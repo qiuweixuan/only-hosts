@@ -23,7 +23,7 @@ use futures::StreamExt;
 // use tokio::io;
 use tokio::prelude::*;
 // use tokio_util::codec::{FramedRead, LinesCodec,Encoder,LengthDelimitedCodec};
-use tokio_util::codec::{LengthDelimitedCodec};
+use tokio_util::codec::LengthDelimitedCodec;
 
 use std::env;
 use std::error::Error;
@@ -33,11 +33,15 @@ use tokio::try_join;
 
 // use bytes::{BytesMut,Bytes};
 
-use sae_net::msgs::message::{Message,MessagePayload};
-use sae_net::msgs::handshake::{HandshakePayload, HandshakeMessagePayload, ClientHelloPayload,Random};
-use sae_net::msgs::type_enums::{HandshakeType,CipherSuite,NamedGroup,ContentType,ProtocolVersion};
-use sae_net::msgs::base::{PayloadU8};
-use sae_net::msgs::codec::{Codec};
+use sae_net::msgs::base::PayloadU8;
+use sae_net::msgs::codec::Codec;
+use sae_net::msgs::handshake::{
+    ClientHelloPayload, HandshakeMessagePayload, HandshakePayload, Random,
+};
+use sae_net::msgs::message::{Message, MessagePayload};
+use sae_net::msgs::type_enums::{
+    CipherSuite, ContentType, HandshakeType, NamedGroup, ProtocolVersion,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -55,10 +59,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // stdin -> write_half  task
     let read_join = tokio::spawn(async move {
-        
-        let client_random =  Random::from_slice(&b"\x02\x00\x00\x00\x01\x00"[..]);
-        let client_cipher_suites = vec![ CipherSuite::FFCPWD_AES_128_GCM_SHA256, CipherSuite::FFCPWD_AES_256_GCM_SHA384];
-        let clinet_name_groups = vec![NamedGroup::FFDHE3072,NamedGroup::FFDHE4096];
+        let client_random = Random::from_slice(&b"\x02\x00\x00\x00\x01\x00"[..]);
+        let client_cipher_suites = vec![
+            CipherSuite::FFCPWD_AES_128_GCM_SHA256,
+            CipherSuite::FFCPWD_AES_256_GCM_SHA384,
+        ];
+        let clinet_name_groups = vec![NamedGroup::FFDHE3072, NamedGroup::FFDHE4096];
         let clinet_pwd_name = PayloadU8::new(Vec::<u8>::from("root"));
 
         let chp = HandshakeMessagePayload {
@@ -87,13 +93,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // read_half -> stdout  task
     let write_join = tokio::spawn(async move {
-
         let mut read_server = LengthDelimitedCodec::builder()
-                .length_field_offset(3) // length of type + version
-                .length_field_length(2)  // length of payload_len
-                .length_adjustment(5) // length of header
-                .num_skip(0)           //goto start location
-                .new_read(read_half);
+            .length_field_offset(3) // length of type + version
+            .length_field_length(2) // length of payload_len
+            .length_adjustment(5) // length of header
+            .num_skip(0) //goto start location
+            .new_read(read_half);
 
         if let Some(message) = read_server.next().await {
             match message {
@@ -104,9 +109,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 Err(err) => println!("closed with error: {:?}", err),
             }
         };
-        
     });
-    
 
     if let Err(e) = try_join!(read_join, write_join) {
         println!("read_join or write_join failed, error={}", e);

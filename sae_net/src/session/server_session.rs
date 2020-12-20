@@ -1,18 +1,17 @@
-use tokio::net::TcpStream;
 use ring::{aead, hkdf};
+use tokio::net::TcpStream;
 
-use crate::session::{server_config::ServerConfig, session_duplex::SessionDuplex,suites};
-use crate::session::error::StateChangeError;
-use crate::session::server_state::{self, ExpectClientHello};
-use crate::session::common::{SessionRandoms,SessionCommon};
 use crate::msgs::handshake::Random;
-use crate::msgs::type_enums::{CipherSuite,NamedGroup};
 use crate::msgs::message::{Message, MessagePayload};
 use crate::msgs::type_enums::ContentType;
+use crate::msgs::type_enums::{CipherSuite, NamedGroup};
+use crate::session::common::{SessionCommon, SessionRandoms};
+use crate::session::error::StateChangeError;
+use crate::session::server_state::{self, ExpectClientHello};
+use crate::session::{server_config::ServerConfig, session_duplex::SessionDuplex, suites};
 
-use sae_core::SaeCaContext;
 use crate::session::server_state_ca;
-
+use sae_core::SaeCaContext;
 
 pub struct ServerSession {
     pub duplex: SessionDuplex,
@@ -40,7 +39,8 @@ impl ServerSession {
         // 启动握手
         if let Err(err) = self.inner_handshake().await {
             // 统一错误处理
-            err.handle_error(&mut self.duplex,&self.config.protocal_version).await;
+            err.handle_error(&mut self.duplex, &self.config.protocal_version)
+                .await;
             return Err(err);
         }
         // 正常状态
@@ -77,9 +77,9 @@ impl ServerSession {
             client: client_random.clone(),
             server: server_random.clone(),
         };
-    
-        self.common.init_sae10_enc_dec(&handshake_secret,&server_randoms, hkdf_algo, aead_algo);
 
+        self.common
+            .init_sae10_enc_dec(&handshake_secret, &server_randoms, hkdf_algo, aead_algo);
 
         Ok(())
     }
@@ -116,14 +116,13 @@ impl ServerSession {
         return Ok(());
     }
 
-
     pub async fn handshake_with_ca(&mut self) -> Result<(), StateChangeError> {
         // 创建CA上下文
         let mut ca_ctx = SaeCaContext::new_ctx()
             .map_err(StateChangeError::convert_error_fn("create ca_ctx error!"))?;
-        let mut ca_session = SaeCaContext::new_session(&mut ca_ctx)
-            .map_err(StateChangeError::convert_error_fn("create ca_session error!"))?;
-        
+        let mut ca_session = SaeCaContext::new_session(&mut ca_ctx).map_err(
+            StateChangeError::convert_error_fn("create ca_session error!"),
+        )?;
 
         // 启动握手
         if let Err(err) = self.inner_handshake_with_ca(&mut ca_session).await {
@@ -137,40 +136,40 @@ impl ServerSession {
         return Ok(());
     }
 
-    async fn recv_message(&mut self) -> Result<Message, StateChangeError>{
+    async fn recv_message(&mut self) -> Result<Message, StateChangeError> {
         // 接收数据包
         let message = self.duplex.read_one_message_or_err().await?;
 
         // 处理数据包
         if let Some(received_message) = message {
             println!("Receive message: \n {:?}", received_message);
-           return Ok(received_message);
+            return Ok(received_message);
         } else {
             // 没有数据包
             return Err(StateChangeError::InvalidTransition);
         }
     }
 
-
-    async fn inner_handshake_with_ca<'a>(&mut self,ca_session: &mut SaeCaContext<'a>) -> Result<(), StateChangeError> {
-        
+    async fn inner_handshake_with_ca<'a>(
+        &mut self,
+        ca_session: &mut SaeCaContext<'a>,
+    ) -> Result<(), StateChangeError> {
         /* 初始化状态 ExpectClientHello */
-        let state = Box::new(server_state_ca::ExpectClientHello{});
-        /* 循环推进状态机，直至完成握手过程 */ 
+        let state = Box::new(server_state_ca::ExpectClientHello {});
+        /* 循环推进状态机，直至完成握手过程 */
 
         let message = ServerSession::recv_message(self).await?;
-        // ExpectClientHello -> ExpectClientAuthCommit 
-        let state = state.handle(self,ca_session,message).await?;
+        // ExpectClientHello -> ExpectClientAuthCommit
+        let state = state.handle(self, ca_session, message).await?;
 
         let message = ServerSession::recv_message(self).await?;
         // ExpectClientAuthCommit  -> ExpectClientAuthConfirm
-        let state = state.handle(self,ca_session,message).await?;
+        let state = state.handle(self, ca_session, message).await?;
 
         let message = ServerSession::recv_message(self).await?;
         // ExpectClientAuthConfirm -> ServerHandshakeFinished
-        state.handle(self,ca_session,message).await?;
+        state.handle(self, ca_session, message).await?;
 
-        
         let cipher_suite = self
             .choose_ciphersuite
             .ok_or(StateChangeError::InternelError(
@@ -184,9 +183,12 @@ impl ServerSession {
             ))?
             .clone();
 
-        let handshake_secret = self.handshake_secret.clone().ok_or(StateChangeError::InternelError(
-            "get sess.handshake_secret error!".to_string(),
-        ))?;
+        let handshake_secret =
+            self.handshake_secret
+                .clone()
+                .ok_or(StateChangeError::InternelError(
+                    "get sess.handshake_secret error!".to_string(),
+                ))?;
 
         let hkdf_algo = support_suite.hkdf_algorithm;
         let aead_algo = support_suite.aead_algorithm;

@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let recv_msg_result = session.recv_msg_payload().await;
             match recv_msg_result {
                 Ok(payload) => {
-                    println!("recv payload: {:?}",String::from_utf8(payload));
+                    println!("recv payload: {:?}", String::from_utf8(payload));
                 }
                 Err(err) => {
                     println!("recv payload error: {:?}", err);

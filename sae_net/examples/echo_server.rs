@@ -21,7 +21,6 @@ async fn main() {
         .expect("TcpListener bind error");
     println!("Listening on: {}", addr);
 
-    
     loop {
         let (socket, _) = listener.accept().await.expect("TcpListener accept error");
 

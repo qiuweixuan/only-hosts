@@ -263,7 +263,6 @@ impl ExpectServerAuthCommit {
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
         let confirm_vec = client_confirm.token;
 
-
         let server_protocal_version = sess.config.protocal_version.clone();
 
         let message_payload = HandshakeMessagePayload {
@@ -354,9 +353,10 @@ impl ExpectServerAuthConfirm {
             .confirm_exchange(&server_confirm)
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
         if !client_pmk.is_confirm {
-            return Err(StateChangeError::InternelError("Reject Server Confirm".to_string()));
-        }
-        else{
+            return Err(StateChangeError::InternelError(
+                "Reject Server Confirm".to_string(),
+            ));
+        } else {
             sess.handshake_secret = Some(client_pmk.pmk);
         }
 

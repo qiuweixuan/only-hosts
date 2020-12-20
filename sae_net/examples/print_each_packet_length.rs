@@ -4,9 +4,9 @@
 #![warn(rust_2018_idioms)]
 
 use tokio::net::TcpListener;
-use tokio::stream::StreamExt;
-use tokio_util::codec::{ LengthDelimitedCodec};
 use tokio::prelude::*;
+use tokio::stream::StreamExt;
+use tokio_util::codec::LengthDelimitedCodec;
 
 use std::env;
 
@@ -47,9 +47,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let mut framed_read = LengthDelimitedCodec::builder()
                 .length_field_offset(3) // length of type + version
-                .length_field_length(2)  // length of payload_len
-                .length_adjustment(5)   // length of header
-                .num_skip(0)             //goto start location
+                .length_field_length(2) // length of payload_len
+                .length_adjustment(5) // length of header
+                .num_skip(0) //goto start location
                 .new_read(read_half);
 
             // let mut framed = Framed::new(socket, LengthDelimitedCodec::new());
@@ -65,8 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if let Err(e) = write_half.write_all(bytes.freeze().as_ref()).await {
                             println!("error on sending response; error = {:?}", e);
                             return;
-                        }
-                        else{
+                        } else {
                             println!("success sending response");
                         }
                     }

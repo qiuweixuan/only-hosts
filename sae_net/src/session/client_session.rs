@@ -193,9 +193,12 @@ impl ClientSession {
             ))?
             .clone();
 
-        let handshake_secret = self.handshake_secret.clone().ok_or(StateChangeError::InternelError(
-            "get sess.handshake_secret error!".to_string(),
-        ))?;
+        let handshake_secret =
+            self.handshake_secret
+                .clone()
+                .ok_or(StateChangeError::InternelError(
+                    "get sess.handshake_secret error!".to_string(),
+                ))?;
 
         let hkdf_algo = support_suite.hkdf_algorithm;
         let aead_algo = support_suite.aead_algorithm;

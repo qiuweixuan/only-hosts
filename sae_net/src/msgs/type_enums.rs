@@ -1,10 +1,10 @@
-use crate::msgs::codec::{Reader, Codec};
+use crate::msgs::codec::{Codec, Reader};
 
 // 协议名
 enum_builder! {
     @U16
     EnumName: ProtocolVersion;
-    EnumVal{ 
+    EnumVal{
         SAEv1_0 => 0x0100
     }
 }
@@ -21,18 +21,17 @@ enum_builder! {
     }
 }
 
-impl CipherSuite{
-    pub fn is_ecc(&self) -> bool{
-        match* self{
-            CipherSuite::ECCPWD_AES_128_GCM_SHA256 |  CipherSuite::ECCPWD_AES_256_GCM_SHA384 => true,
-            _ => false
+impl CipherSuite {
+    pub fn is_ecc(&self) -> bool {
+        match *self {
+            CipherSuite::ECCPWD_AES_128_GCM_SHA256 | CipherSuite::ECCPWD_AES_256_GCM_SHA384 => true,
+            _ => false,
         }
     }
-    pub fn is_ffc(&self) -> bool{
+    pub fn is_ffc(&self) -> bool {
         !self.is_ecc()
     }
 }
-
 
 // 哈希算法
 enum_builder! {
@@ -47,7 +46,6 @@ enum_builder! {
         SHA512 => 0x06
     }
 }
-
 
 // 块加密算法
 enum_builder! {
@@ -83,14 +81,14 @@ enum_builder! {
     }
 }
 
-impl NamedGroup{
-    pub fn is_ecc(&self) -> bool{
-        match* self{
-            NamedGroup::Sepc384r1 |  NamedGroup::Secp521r1 => true,
-            _ => false
+impl NamedGroup {
+    pub fn is_ecc(&self) -> bool {
+        match *self {
+            NamedGroup::Sepc384r1 | NamedGroup::Secp521r1 => true,
+            _ => false,
         }
     }
-    pub fn is_ffc(&self) -> bool{
+    pub fn is_ffc(&self) -> bool {
         !self.is_ecc()
     }
 }
@@ -123,7 +121,6 @@ enum_builder! {
         ServerAuthConfirm => 0x06
     }
 }
-
 
 enum_builder! {
     /// The `AlertLevel` TLS protocol enum.  Values in this enum are taken

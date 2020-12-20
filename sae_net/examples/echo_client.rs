@@ -3,11 +3,11 @@
 
 #![warn(rust_2018_idioms)]
 
+use sae_net::session::client_config::ClientConfig;
+use sae_net::session::client_session::ClientSession;
 use std::env;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
-use sae_net::session::client_config::ClientConfig;
-use sae_net::session::client_session::ClientSession;
 
 #[tokio::main]
 async fn main() {
@@ -20,7 +20,9 @@ async fn main() {
         .expect("this program requires at least one argument");
     let addr = addr.parse::<SocketAddr>().expect("SocketAddr parse error");
 
-    let server_sock = TcpStream::connect(addr).await.expect("TcpStream connect error");
+    let server_sock = TcpStream::connect(addr)
+        .await
+        .expect("TcpStream connect error");
 
     let config = ClientConfig::new();
     // let config = ClientConfig::new_ecc_config();
@@ -42,7 +44,10 @@ async fn main() {
         println!("send payload error: {:?}", err);
         return;
     } else {
-        println!("send payload: {:?}", String::from_utf8(payload).expect("Payload to Message error"));
+        println!(
+            "send payload: {:?}",
+            String::from_utf8(payload).expect("Payload to Message error")
+        );
     }
     match session.recv_msg_payload().await {
         Ok(payload) => {

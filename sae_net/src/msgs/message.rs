@@ -1,10 +1,9 @@
+use crate::msgs::alert::{AlertMessagePayload, SaeAlert};
 use crate::msgs::base::Payload;
 use crate::msgs::codec::{Codec, Reader};
 use crate::msgs::handshake::HandshakeMessagePayload;
 use crate::msgs::type_enums::{ContentType, HandshakeType, ProtocolVersion};
-use crate::msgs::alert::{AlertMessagePayload,SaeAlert};
 use std::mem;
-
 
 // SAE消息体负载
 #[derive(Debug)]
@@ -55,7 +54,7 @@ pub enum MessageError {
     IllegalLength,
     IllegalContentType,
     IllegalProtocolVersion,
-    Unknown
+    Unknown,
 }
 
 // 头部、负载、总长度限制
@@ -65,7 +64,6 @@ impl Message {
     /// That's 2^14 payload bytes, a header, and a 2KB allowance
     /// for ciphertext overheads.
     pub const MAX_PAYLOAD: u16 = 16384 + 2048;
-
 
     pub const TYPE_SIZE: u16 = 1;
 
@@ -129,7 +127,7 @@ impl Message {
             ContentType::Handshake => {
                 let data = HandshakeMessagePayload::read(&mut sub).unwrap();
                 MessagePayload::Handshake(data)
-            },
+            }
             ContentType::Alert => {
                 let data = AlertMessagePayload::read(&mut sub).unwrap();
                 MessagePayload::Alert(data)
@@ -159,7 +157,7 @@ impl Message {
         }
     }
 
-    pub fn build_alert(version: &ProtocolVersion , alert: SaeAlert) -> Message {
+    pub fn build_alert(version: &ProtocolVersion, alert: SaeAlert) -> Message {
         Message {
             typ: ContentType::Alert,
             version: version.clone(),
@@ -167,8 +165,7 @@ impl Message {
         }
     }
 
-
-     pub fn take_payload(self) -> Vec<u8> {
+    pub fn take_payload(self) -> Vec<u8> {
         // self.into_opaque().take_opaque_payload().unwrap().0
         let mut buf = Vec::new();
         self.payload.encode(&mut buf);
@@ -199,14 +196,13 @@ impl Message {
     }
 }
 
-
 impl<'a> Message {
     pub fn to_borrowed(&'a self) -> BorrowMessage<'a> {
         if let MessagePayload::Opaque(ref p) = self.payload {
             BorrowMessage {
                 typ: self.typ,
                 version: self.version,
-                payload: &p.0
+                payload: &p.0,
             }
         } else {
             unreachable!("to_borrowed must have opaque message");
