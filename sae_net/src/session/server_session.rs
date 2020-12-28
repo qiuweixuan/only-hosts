@@ -136,6 +136,20 @@ impl ServerSession {
         return Ok(());
     }
 
+    pub async fn handshake_with_ta<'a>(&mut self,ca_session: &mut SaeCaContext<'a>) -> Result<(), StateChangeError> {
+
+        // 启动握手
+        if let Err(err) = self.inner_handshake_with_ca(ca_session).await {
+            // 统一错误处理
+            err.handle_error(&mut self.duplex, &self.config.protocal_version)
+                .await;
+            return Err(err);
+        }
+
+        // 正常状态
+        return Ok(());
+    }
+
     async fn recv_message(&mut self) -> Result<Message, StateChangeError> {
         // 接收数据包
         let message = self.duplex.read_one_message_or_err().await?;
@@ -193,9 +207,6 @@ impl ServerSession {
         let hkdf_algo = support_suite.hkdf_algorithm;
         let aead_algo = support_suite.aead_algorithm;
         let client_randoms = &self.randoms;
-        // let handshake_secret_hex_str =
-        //     "59bcf341b58ae026f07f3d704eabda760636a83a75a3ff2fa130b263c0848e17";
-        // let handshake_secret = hex::decode(handshake_secret_hex_str).unwrap();
 
         self.common
             .init_sae10_enc_dec(&handshake_secret, client_randoms, hkdf_algo, aead_algo);
