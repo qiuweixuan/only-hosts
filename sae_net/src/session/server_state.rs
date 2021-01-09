@@ -108,7 +108,7 @@ impl ServerHandshakeState for ExpectClientHello {
 
         // 打印收到的pwd_name
         let pwd_name = client_hello.pwd_name.clone().into_inner();
-        println!("Received pwd_name: {:?}", String::from_utf8(pwd_name));
+        log::debug!("Received pwd_name: {:?}", String::from_utf8(pwd_name));
 
         // 选择加密套件
         let maybe_ciphersuite = suites::choose_ciphersuite_preferring_server(
@@ -140,7 +140,7 @@ impl ServerHandshakeState for ExpectClientHello {
 
         // 构建ServerHello信息
         let sh = self.initial_server_hello(&cipher_suite, &named_group, sess);
-        println!("Send ServerHello message : \n {:?}", sh);
+        log::debug!("Send ServerHello message : \n {:?}", sh);
 
         // 发送ServerHello消息
         sess.duplex.write_one_message_or_err(sh).await?;
@@ -148,7 +148,7 @@ impl ServerHandshakeState for ExpectClientHello {
         // 构建ServerAuthCommit消息
         let auth_commit = self.initial_auth_commit(sess);
 
-        println!("Send ServerAuthCommit message :\n {:?}", auth_commit);
+        log::debug!("Send ServerAuthCommit message :\n {:?}", auth_commit);
 
         // 发送ServerAuthCommit消息
         sess.duplex.write_one_message_or_err(auth_commit).await?;
@@ -215,7 +215,7 @@ impl ServerHandshakeState for ExpectClientAuthCommit {
         // 构建ServerAuthConfirm消息
         let auth_confirm = self.initial_auth_confirm(sess);
 
-        println!("Send ServerAuthConfirm message : \n {:?}", auth_confirm);
+        log::debug!("Send ServerAuthConfirm message : \n {:?}", auth_confirm);
 
         // 发送ServerAuthConfirm消息
         sess.duplex.write_one_message_or_err(auth_confirm).await?;

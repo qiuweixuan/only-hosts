@@ -16,3 +16,5 @@ hex = "0.4.2"
 ring = "0.16.1"
 once_cell = "1.5.2"
 sae_core = { path = "../../examples/sae_core/host" }
+log = "0.4"
+log4rs = "1.0.0"

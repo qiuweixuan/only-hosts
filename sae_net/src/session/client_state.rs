@@ -82,7 +82,7 @@ impl ClientHandshakeState for InitialClientHandshakeState {
             client_random: self.client_random,
         });
 
-        println!("Send ClientHello message : \n {:?}", m);
+        log::debug!("Send ClientHello message : \n {:?}", m);
 
         // 发送消息
         sess.duplex.write_one_message_or_err(m).await?;
@@ -177,7 +177,7 @@ impl ClientHandshakeState for ExpectServerHello {
         // 构建ClientAuthCommit消息
         let auth_commit = self.initial_auth_commit(sess);
 
-        println!("Send ClientAuthCommit message : \n {:?}", auth_commit);
+        log::debug!("Send ClientAuthCommit message : \n {:?}", auth_commit);
 
         // 发送ClientAuthCommit消息
         sess.duplex.write_one_message_or_err(auth_commit).await?;
@@ -244,7 +244,7 @@ impl ClientHandshakeState for ExpectServerAuthCommit {
         // 构建ClientAuthConfirm消息
         let auth_confirm = self.initial_auth_confirm(sess);
 
-        println!("Send ClientAuthConfirm message : \n {:?}", auth_confirm);
+        log::debug!("Send ClientAuthConfirm message : \n {:?}", auth_confirm);
 
         // 发送ClientAuthConfirm消息
         sess.duplex.write_one_message_or_err(auth_confirm).await?;

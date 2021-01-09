@@ -18,7 +18,7 @@ impl StateChangeError {
         handshake_types: &[HandshakeType],
     ) -> Result<(), StateChangeError> {
         if !content_types.contains(&m.typ) {
-            println!(
+            log::error!(
                 "Send a {:?} message while expecting {:?}",
                 m.typ, content_types
             );
@@ -29,7 +29,7 @@ impl StateChangeError {
         }
         if let MessagePayload::Handshake(ref hsp) = m.payload {
             if !handshake_types.is_empty() && !handshake_types.contains(&hsp.typ) {
-                println!(
+                log::error!(
                     "Send a {:?} handshake message while expecting {:?}",
                     hsp.typ, handshake_types
                 );
@@ -54,7 +54,7 @@ impl StateChangeError {
 
         // 检查数据包类型
         if !content_types.contains(&m.typ) {
-            println!(
+            log::error!(
                 "Received a {:?} message while expecting {:?}",
                 m.typ, content_types
             );
@@ -62,7 +62,7 @@ impl StateChangeError {
         }
         if let MessagePayload::Handshake(ref hsp) = m.payload {
             if !handshake_types.is_empty() && !handshake_types.contains(&hsp.typ) {
-                println!(
+                log::error!(
                     "Received a {:?} handshake message while expecting {:?}",
                     hsp.typ, handshake_types
                 );
@@ -78,7 +78,7 @@ impl StateChangeError {
         protocal_version: &ProtocolVersion,
     ) {
         // 打印错误
-        println!("StateChangeError {:?}", self);
+        log::error!("StateChangeError {:?}", self);
 
         // 尝试发送错误处理
         if let Self::AlertSend(alert) = self {

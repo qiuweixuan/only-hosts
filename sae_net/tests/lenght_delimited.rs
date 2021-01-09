@@ -18,15 +18,6 @@ fn encode_overflow() {
 
 #[test]
 fn bytes_hex() {
-    // let data = b"ab\x01\x0b";
-    // let v = data.to_vec();
-    // let b = Bytes::from(&data[..]);
-    // let b = Bytes::from(v);
-    // assert_eq!(b.len(), 4);
-    // println!("{:?}", b);
-    // println!("{:x}", b);
-    // println!("{:#02X}", b);
-
     let mut data = Vec::<u8>::new();
     data.put_slice(b"ab\x01\x0b");
     let b = Bytes::from(data);

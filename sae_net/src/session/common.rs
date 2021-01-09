@@ -202,7 +202,7 @@ impl SessionCommon {
                     self.close_session();
                     return Err(StateChangeError::AlertSend(SaeAlert::CloseNotify));
                 }
-
+                log::debug!("[recv_msg] : {:?}", recv_msg);
                 // 进行解密
                 let dm = self.record_layer.decrypt_incoming(recv_msg)?;
                 recv_msg = dm;
@@ -253,6 +253,7 @@ impl SessionCommon {
                 let em = self.record_layer.encrypt_outgoing(send_msg.to_borrowed())?;
                 send_msg = em;
             }
+            log::debug!("[send_msg] : {:?}", send_msg);
             duplex.write_one_message_or_err(send_msg).await?;
         }
 

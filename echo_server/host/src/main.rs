@@ -1,5 +1,5 @@
 //!     cargo run --example echo_server
-//!     cargo run --example echo_client 127.0.0.1:8082
+//!     cargo run --example echo_client 127.0.0.1:8080
 
 #![warn(rust_2018_idioms)]
 
@@ -10,15 +10,34 @@ use sae_net::session::server_config::ServerConfig;
 use sae_net::session::server_session::ServerSession;
 use std::env;
 
+use structopt::StructOpt;
+use log4rs;
+use log;
+
+#[derive(StructOpt, Debug)]
+struct Server {
+    /// Pass an address we're going to listen to
+    #[structopt(name = "addr", long = "--addr" , default_value = "127.0.0.1:8080")]
+    addr: String,
+
+    /// Pass an log config file path
+    #[structopt(name = "log", long = "--log", default_value = "./log/echo_server_log.yaml")]
+    log: String,
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Allow passing an address to listen on as the first argument of this
     // program, but otherwise we'll just set up our TCP listener on
-    // 127.0.0.1:8082 for connections.
+    // 127.0.0.1:8080 for connections.
     // 获取服务端绑定地址
-    let addr = env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8082".to_string());
+    // Parse command line arguments
+    let server_args = Server::from_args();
+    log::info!("args: {:?}",server_args);
+
+    // 进行日志配置
+    log4rs::init_file(server_args.log, Default::default())?;
 
     // Next up we create a TCP listener which will listen for incoming
     // connections. This TCP listener is bound to the address we determined
@@ -27,8 +46,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // to go and start accepting connections.
 
     // 获取服务端监听器
-    let listener = TcpListener::bind(&addr).await?;
-    println!("Listening on: {}", addr);
+    let listener = TcpListener::bind(&server_args.addr).await?;
+     log::info!("Listening on: {}", server_args.addr);
 
     loop {
         // Asynchronously wait for an inbound socket.
@@ -43,10 +62,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // 进行SAE握手过程
         if let Err(err) = session.handshake_with_ca().await {
-            println!("handshake error: {:?}", err);
+             log::info!("handshake error: {:?}", err);
             continue;
         } else {
-            println!("handshake success");
+             log::info!("handshake success");
         }
         // And this is where much of the magic of this server happens. We
         // crucially want all clients to make progress concurrently, rather than
@@ -62,24 +81,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let recv_msg = match session.recv_msg_payload().await {
                     Ok(payload) => {
                         if payload.len() == 0 {
-                            println!("Socket received FIN packet and closed connection");
+                             log::info!("Socket received FIN packet and closed connection");
                             return;
                         }
                         let recv_msg = String::from_utf8(payload).unwrap();
-                        println!("recv payload: {:?}", recv_msg);
+                         log::info!("recv payload: {:?}", recv_msg);
                         recv_msg
                     }
                     Err(err) => {
-                        println!("recv payload error: {:?}", err);
+                         log::info!("recv payload error: {:?}", err);
                         return;
                     }
                 };
                 let payload = Vec::<u8>::from(recv_msg);
                 if let Err(err) = session.send_msg_payload(&payload).await {
-                    println!("send payload error: {:?}", err);
+                     log::info!("send payload error: {:?}", err);
                     return;
                 } else {
-                    println!("send payload: {:?}", String::from_utf8(payload).unwrap());
+                     log::info!("send payload: {:?}", String::from_utf8(payload).unwrap());
                 }
             }
         });

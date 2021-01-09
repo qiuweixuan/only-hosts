@@ -31,6 +31,7 @@ impl InitialClientHandshakeState {
         let client_cipher_suites = sess.config.cipher_suites.clone();
         let clinet_name_groups = sess.config.name_groups.clone();
         let clinet_pwd_name = sess.config.pwd_name.clone();
+        let clinet_password = sess.config.password.clone();
         let clinet_protocal_version = sess.config.protocal_version.clone();
         // 获取随机数
         /* GeneRandom */
@@ -47,11 +48,23 @@ impl InitialClientHandshakeState {
             .map_err(StateChangeError::convert_error_fn(
                 "set sess.randoms.client error!",
             ))?;
-        // 加载密码(初始化SAE-CORE端密码)
-        /* LoadDevUserPassword */
-        ca_session
+        // 初始化SAE-CORE端密码 
+        
+        if let Some(password) = clinet_password{
+            // 如果密码存在则设置内存密码
+            /* InitMemUserPassword */
+            ca_session
+            .init_mem_user_password(&clinet_pwd_name.clone().into_inner(), &password)
+            .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
+        }
+        else{
+            // 否则加载设备密码
+            /* LoadDevUserPassword */
+            ca_session
             .load_dev_user_password(&clinet_pwd_name.clone().into_inner())
             .map_err(|err| StateChangeError::InternelError(err.message().to_string()))?;
+        };
+        
 
         // 设置消息负载
         let chp = HandshakeMessagePayload {
@@ -92,7 +105,7 @@ impl InitialClientHandshakeState {
         // 创建下一个状态
         let next_state = Box::new(ExpectServerHello {});
 
-        println!("Send ClientHello message : \n {:?}", m);
+        log::debug!("Send ClientHello message : \n {:?}", m);
 
         // 发送消息
         sess.duplex.write_one_message_or_err(m).await?;
@@ -226,7 +239,7 @@ impl ExpectServerHello {
         // 构建ClientAuthCommit消息
         let auth_commit = self.initial_auth_commit(sess, ca_session)?;
 
-        println!("Send ClientAuthCommit message : \n {:?}", auth_commit);
+        log::debug!("Send ClientAuthCommit message : \n {:?}", auth_commit);
 
         // 发送ClientAuthCommit消息
         sess.duplex.write_one_message_or_err(auth_commit).await?;
@@ -306,7 +319,7 @@ impl ExpectServerAuthCommit {
         // 构建ClientAuthConfirm消息
         let auth_confirm = self.initial_auth_confirm(sess, ca_session, &server_auth_commit)?;
 
-        println!("Send ClientAuthConfirm message : \n {:?}", auth_confirm);
+        log::debug!("Send ClientAuthConfirm message : \n {:?}", auth_confirm);
 
         // 发送ClientAuthConfirm消息
         sess.duplex.write_one_message_or_err(auth_confirm).await?;

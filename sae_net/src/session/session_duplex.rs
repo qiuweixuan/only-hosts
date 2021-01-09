@@ -52,14 +52,14 @@ impl SessionDuplex {
                         // 正常读取消息（返回消息）
                         Ok(message) => return Some(message),
                         // 解析消息错误
-                        Err(err) => println!(
+                        Err(err) => log::error!(
                             "[read_one_message_detail_error] decode one message with error: {:?}",
                             err
                         ),
                     }
                 }
                 // 读取消息错误
-                Err(err) => println!(
+                Err(err) => log::error!(
                     "[read_one_message_detail_error] read one message with error: {:?}",
                     err
                 ),
@@ -75,7 +75,7 @@ impl SessionDuplex {
         let buf = message.get_encoding();
         match self.write_half.write_all(&buf).await {
             Err(err) => {
-                println!("[write_one_message]  error {:?}", err);
+                log::error!("[write_one_message]  error {:?}", err);
                 Err(err)
             }
             Ok(()) => Ok(()),
@@ -92,14 +92,14 @@ impl SessionDuplex {
                         // 正常读取消息（返回消息）
                         Ok(message) => return Ok(Some(message)),
                         // 解析消息错误
-                        Err(err) => println!(
+                        Err(err) => log::error!(
                             "[read_one_message_detail_error] decode one message with error: {:?}",
                             err
                         ),
                     }
                 }
                 // 读取消息错误
-                Err(err) => println!(
+                Err(err) => log::error!(
                     "[read_one_message_detail_error] read one message with error: {:?}",
                     err
                 ),
@@ -117,7 +117,7 @@ impl SessionDuplex {
         let buf = message.get_encoding();
         match self.write_half.write_all(&buf).await {
             Err(err) => {
-                println!("[write_one_message]  error {:?}", err);
+                log::error!("[write_one_message]  error {:?}", err);
                 Err(StateChangeError::InternelError(err.to_string()))
             }
             Ok(()) => Ok(()),

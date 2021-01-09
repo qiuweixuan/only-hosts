@@ -13,6 +13,7 @@ use crate::session::{client_config::ClientConfig, session_duplex::SessionDuplex,
 use crate::session::client_state_ca;
 use sae_core::SaeCaContext;
 
+
 pub struct ClientSession {
     pub duplex: SessionDuplex,
     pub config: ClientConfig,
@@ -64,7 +65,7 @@ impl ClientSession {
 
             // 处理数据包
             if let Some(received_message) = message {
-                println!("Receive message {:?}", received_message);
+                log::debug!("Receive message {:?}", received_message);
                 state = state.handle(self, received_message).await?;
             } else {
                 // 没有数据包
@@ -162,7 +163,7 @@ impl ClientSession {
 
         // 处理数据包
         if let Some(received_message) = message {
-            println!("Receive message: \n {:?}", received_message);
+            log::debug!("Receive message: \n {:?}", received_message);
             return Ok(received_message);
         } else {
             // 没有数据包

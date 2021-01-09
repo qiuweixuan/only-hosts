@@ -121,7 +121,7 @@ impl ExpectClientHello {
     ) -> Result<(), StateChangeError> {
         // 打印收到的pwd_name
         let clinet_pwd_name = client_hello.pwd_name.clone().into_inner();
-        println!(
+        log::debug!(
             "Received pwd_name: {:?}",
             String::from_utf8(clinet_pwd_name.clone())
         );
@@ -195,7 +195,7 @@ impl ExpectClientHello {
 
         // 构建ServerHello信息
         let sh = self.initial_server_hello(sess, ca_session)?;
-        println!("Send ServerHello message : \n {:?}", sh);
+        log::debug!("Send ServerHello message : \n {:?}", sh);
 
         // 发送ServerHello消息
         sess.duplex.write_one_message_or_err(sh).await?;
@@ -203,7 +203,7 @@ impl ExpectClientHello {
         // 构建ServerAuthCommit消息
         let auth_commit = self.initial_auth_commit(sess, ca_session)?;
 
-        println!("Send ServerAuthCommit message :\n {:?}", auth_commit);
+        log::debug!("Send ServerAuthCommit message :\n {:?}", auth_commit);
 
         // 发送ServerAuthCommit消息
         sess.duplex.write_one_message_or_err(auth_commit).await?;
@@ -283,7 +283,7 @@ impl ExpectClientAuthCommit {
         // 构建ServerAuthConfirm消息
         let auth_confirm = self.initial_auth_confirm(sess, ca_session, &client_auth_commit)?;
 
-        println!("Send ServerAuthConfirm message : \n {:?}", auth_confirm);
+        log::debug!("Send ServerAuthConfirm message : \n {:?}", auth_confirm);
 
         // 发送ServerAuthConfirm消息
         sess.duplex.write_one_message_or_err(auth_confirm).await?;
